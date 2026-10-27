@@ -116,15 +116,60 @@ for (const entry of claudeMarketplace.plugins ?? []) {
   }
 }
 
+const codexMarketplacePath = resolve(root, ".agents/plugins/marketplace.json");
+const codexMarketplace = existsSync(codexMarketplacePath)
+  ? loadJSON(codexMarketplacePath)
+  : { plugins: [] };
+const codexEntries = (codexMarketplace.plugins ?? []).map((entry) => ({
+  name: entry.name,
+  source: entry.source?.path,
+}));
+
+// Codex reads only .agents/plugins/marketplace.json when it exists, so it must list every Claude marketplace plugin.
+const claudeNames = (claudeMarketplace.plugins ?? []).map(({ name }) => name).sort();
+const codexNames = codexEntries.map(({ name }) => name).sort();
+if (existsSync(codexMarketplacePath) && claudeNames.join() !== codexNames.join()) {
+  fail(
+    `Codex marketplace lists [${codexNames.join(", ")}], but the Claude marketplace lists [${claudeNames.join(", ")}]`
+  );
+}
+
+for (const entry of codexEntries) {
+  if (typeof entry.source !== "string") {
+    fail(`Plugin "${entry.name}": Codex marketplace entry has no source.path`);
+    continue;
+  }
+  const pluginDir = resolve(root, entry.source);
+  const pluginJsonPath = [".codex-plugin/plugin.json", ".claude-plugin/plugin.json"]
+    .map((path) => resolve(pluginDir, path))
+    .find((path) => existsSync(path));
+
+  if (!pluginJsonPath) {
+    fail(
+      `Plugin "${entry.name}": missing .codex-plugin/plugin.json or .claude-plugin/plugin.json in "${entry.source}"`
+    );
+    continue;
+  }
+
+  const pluginJson = loadJSON(pluginJsonPath);
+  if (pluginJson.name && pluginJson.name !== entry.name) {
+    fail(
+      `Plugin "${entry.name}": Codex marketplace name does not match ${pluginJsonPath.slice(pluginDir.length + 1)} name "${pluginJson.name}"`
+    );
+  }
+}
+
 const manifestPaths = [
   ".cursor-plugin/plugin.json",
   ".claude-plugin/plugin.json",
+  ".codex-plugin/plugin.json",
   "plugin.json",
 ];
 const sources = new Map();
 for (const entry of [
   ...(marketplace.plugins ?? []),
   ...(claudeMarketplace.plugins ?? []),
+  ...codexEntries.filter(({ source }) => typeof source === "string"),
 ]) {
   sources.set(resolve(root, entry.source), entry.name);
 }
