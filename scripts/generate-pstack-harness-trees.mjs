@@ -10,16 +10,24 @@ const SKILLS = join(PSTACK, "skills");
 // Outside pstack/ so Cursor, which copies the whole plugin folder, does not install this tree too.
 const OUT = join(ROOT, "harness", "pstack");
 const GUIDE = "docs/guide";
+// Codex ignores `disable-model-invocation`, and this file keeps the skill out of its model catalog.
+// The Claude Code tree ships it too, because Codex also installs that tree through its root manifest.
+const CODEX_POLICY = { path: "agents/openai.yaml", text: "policy:\n  allow_implicit_invocation: false\n" };
 const TARGETS = [
-  { tree: "claude-code", harness: "Claude Code", adapter: "docs/harness/claude-code.md", manifests: ["plugin.json", ".claude-plugin/plugin.json"] },
+  {
+    tree: "claude-code",
+    harness: "Claude Code",
+    adapter: "docs/harness/claude-code.md",
+    manifests: ["plugin.json", ".claude-plugin/plugin.json"],
+    userInvoked: CODEX_POLICY,
+  },
   {
     tree: "codex",
     harness: "Codex",
     adapter: "docs/harness/codex.md",
     manifests: [".codex-plugin/plugin.json"],
     manifestFields: { skills: "./skills/" },
-    // Codex ignores `disable-model-invocation`, and this file keeps the skill out of its model catalog.
-    userInvoked: { path: "agents/openai.yaml", text: "policy:\n  allow_implicit_invocation: false\n" },
+    userInvoked: CODEX_POLICY,
   },
 ];
 const COMMAND = "node scripts/generate-pstack-harness-trees.mjs";
