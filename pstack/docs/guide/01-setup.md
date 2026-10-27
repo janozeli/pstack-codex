@@ -14,6 +14,8 @@ Cursor confirms the plugin is installed.
 
 In Claude Code, run `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Claude Code prefixes plugin commands, so each command in this guide takes a `pstack:` prefix there, such as `/pstack:setup-pstack`, which writes its model rule to `~/.claude/rules/pstack-models.md`. The [Claude Code adapter](../harness/claude-code.md) covers the other differences.
 
+In Codex, run `codex plugin marketplace add cursor/plugins`, then `codex plugin add pstack@cursor-plugins`. Codex runs each skill with a `$pstack:` prefix, such as `$pstack:setup-pstack`, which writes its model rule to a marked block in `~/.codex/AGENTS.md`. The [Codex adapter](../harness/codex.md) covers the other differences.
+
 ## Pick your models
 
 Run:
