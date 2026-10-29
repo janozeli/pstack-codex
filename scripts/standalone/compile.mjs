@@ -138,6 +138,8 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /\bclaude-opus-5-5-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `${codex ? 'inherit-parent' : 'opus'} ${effort}`);
   text = edit.replace(text, /\bgrok-4\.7-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `inherit-parent ${effort}`);
   text = edit.replace(text, /Cursor's built-in `create-skill`(?: skill)?|the \*\*create-skill\*\* skill \(Cursor's built-in for authoring SKILL.md files\)/g, 'the skill-authoring procedure in docs/runtime.md');
+  text = edit.replace(text, /^Not in pstack:\n\n- `\/deslop`, `control-cli`, and `control-ui` ship in the `cursor-team-kit` plugin\.\n/m, 'This package also bundles `/deslop`, `control-cli`, and `control-ui`.\n\nNot in pstack:\n\n');
+  text = edit.replace(text, /`\/deslop` ships in the `cursor-team-kit` plugin, not in pstack\. If you don't have it, ask for the same outcome in plain words: [^\n]*? edits\./, '`/deslop` ships bundled with this package.');
   text = edit.replace(text, /(?:from|in) (?:the )?`cursor-team-kit`(?: plugin)?/g, 'bundled with this package');
   text = edit.replace(text, /Cursor's `\/loop` command(?: \(a built-in, not a pstack skill\))?/g, 'the host-supported persistent watcher');
   text = edit.replace(text, /Cursor cloud agent/g, 'isolated worker');

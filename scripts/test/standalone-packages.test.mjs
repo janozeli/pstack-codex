@@ -153,6 +153,8 @@ test('packages bundle the control and cleanup skills pstack calls', () => {
       assert.match(readFileSync(join(dir, 'skills', skill, 'LICENSE'), 'utf8'), /MIT License[\s\S]*Copyright \(c\) 2026 Cursor/);
     }
     assert.ok(readFileSync(join(dir, 'skills/poteto-mode/SKILL.md'), 'utf8').includes(`${invoke}deslop`), host);
+    assert.ok(readFileSync(join(dir, 'skills/poteto-help/SKILL.md'), 'utf8').includes(`This package also bundles \`${invoke}deslop\``), host);
+    assert.doesNotMatch(readFileSync(join(dir, 'docs/guide/05-build-and-clean.md'), 'utf8'), /not in pstack/, host);
     for (const file of walk(dir).filter(path => path.endsWith('.md'))) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /code cleanup procedure|(?:CLI|UI) verification procedure/, file);
     }

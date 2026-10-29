@@ -113,9 +113,10 @@ Close calls:
 - `$pstack:recall` rebuilds context across recent chats. `$pstack:ketchup` covers only this chat since the user's last message. Resuming one specific chat or branch is the Session pickup playbook.
 - `$pstack:figure-it-out` designs one rigorous run. The Orchestrate playbook runs a program that spans days and many PRs. The Autonomous run playbook drives one task to a finish condition.
 
+This package also bundles `$pstack:deslop`, `control-cli`, and `control-ui`.
+
 Not in pstack:
 
-- `$pstack:deslop`, `control-cli`, and `control-ui` ship bundled with this package.
 - Monitoring and skill authoring use the bundled runtime procedures and available host tools.
 - pstack has no `/orchestrate` skill. Orchestrate is a `$pstack:poteto-mode` playbook. If the slash menu shows `/orchestrate`, another plugin provides it.
 

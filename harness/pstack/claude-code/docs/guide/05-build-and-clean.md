@@ -56,7 +56,7 @@ In context, that's enough. [`/pstack:tdd`](../../skills/tdd/SKILL.md) writes the
 
 ## Clean before you commit
 
-The [Opening a PR playbook](../../skills/poteto-mode/playbooks/opening-a-pr.md) runs `/pstack:deslop` on the diff before each commit and applies [`/pstack:unslop`](../../skills/unslop/SKILL.md) to the PR description and commit bodies. `/pstack:deslop` ships bundled with this package, not in pstack. If you don't have it, ask for the same outcome in plain words: remove narrating comments, unsupported guards, dead compatibility paths, and unrelated edits.
+The [Opening a PR playbook](../../skills/poteto-mode/playbooks/opening-a-pr.md) runs `/pstack:deslop` on the diff before each commit and applies [`/pstack:unslop`](../../skills/unslop/SKILL.md) to the PR description and commit bodies. `/pstack:deslop` ships bundled with this package.
 
 For prose, `/pstack:unslop` takes a target and any extra rules you have:
 
