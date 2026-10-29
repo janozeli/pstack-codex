@@ -13,7 +13,7 @@ Write `$CLAUDE_CONFIG_DIR/rules/pstack-models.md`, an always-applied rule that s
 
 ### 1. Detect available models
 
-Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields. Then detect seats on other providers: run `--version` for each of `codex`, `claude` and `grok` other than this host, and offer each one that answers as `<provider>:<model> <effort>` choices for panel roles and the arena cross-judge pool, so panels keep a family other than the parent's. In T3, the providers `orchestrator_capabilities` lists are the preferred route.
+Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields. Then detect seats on other providers: run `--version` for each of `codex`, `claude` and `grok` other than this host, and offer each one that answers as `<provider>:<model> <effort>` choices for the roles that answer without writing files, the arena cross-judge pool and interrogate reviewers, so their judgment keeps a family other than the parent's. Roles that write artifacts, such as arena and architect runners, keep native or T3 seats. In T3, the providers `orchestrator_capabilities` lists are the preferred route.
 
 ### 2. Load current state
 

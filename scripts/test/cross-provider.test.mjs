@@ -46,6 +46,7 @@ for (const [provider, readOnly] of [["codex", "read-only"], ["claude", "plan"], 
 
 test("a failing seat writes no reply and exits nonzero", (t) => {
   const f = fixture(t, 3);
+  writeFileSync(join(f.dir, "out.md"), "APPROVE from an earlier run\n");
   const result = f.run("codex", "model-x", "high", "brief.md", "out.md", f.dir);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Cross-provider seat failed: codex exited 3/);

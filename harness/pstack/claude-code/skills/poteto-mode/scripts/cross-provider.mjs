@@ -3,7 +3,7 @@
 // Runs one read-only seat on another provider's CLI, for panels and judges that need a
 // different model family than the parent. Writes the seat's final reply to <output>.
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const [provider, model, effort, briefPath, outputPath, cwd = process.cwd()] = process.argv.slice(2);
@@ -35,6 +35,7 @@ try {
     throw new Error(`usage: cross-provider.mjs <${Object.keys(SEATS).join("|")}> <model> <effort> <brief> <output> [cwd]`);
   }
   brief = `Read-only seat: do not edit files, commit, push, post comments, or start subagents.\n\n${readFileSync(briefPath, "utf8")}`;
+  rmSync(outputPath, { force: true });
   const seat = SEATS[provider]();
   const run = spawnSync(seat.command, seat.args, { cwd: resolve(cwd), input: seat.input, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
   if (run.error) throw run.error;
