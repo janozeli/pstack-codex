@@ -172,3 +172,44 @@ test('monitoring maps to each host native command', () => {
   assert.match(codex, /\/goal/);
   assert.match(readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8'), /schedule_task/);
 });
+
+test('each runtime names its host isolation, authoring and review tools', () => {
+  const claude = readFileSync(join(root, 'harness/pstack/claude-code/docs/runtime.md'), 'utf8');
+  const codex = readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8');
+  assert.match(claude, /isolation: "worktree"/);
+  assert.match(claude, /claude --cloud/);
+  assert.match(claude, /skill-creator plugin/);
+  assert.match(codex, /git worktree add/);
+  assert.match(codex, /codex cloud exec/);
+  assert.match(codex, /\$skill-creator/);
+  for (const text of [claude, codex]) {
+    assert.match(text, /orchestrator_capabilities/);
+    assert.match(text, /Bugbot steps do not apply/);
+    assert.ok(existsSync(join(root, 'harness/pstack/codex/skills/poteto-mode/references/bugbot-triage.md')));
+  }
+});
+
+test('packages ship the cross-provider seat and teach setup to offer it', () => {
+  for (const host of ['claude-code', 'codex']) {
+    const dir = join(root, 'harness/pstack', host);
+    assert.ok(existsSync(join(dir, 'skills/poteto-mode/scripts/cross-provider.mjs')), host);
+    assert.match(readFileSync(join(dir, 'docs/runtime.md'), 'utf8'), /<provider>:<model> <effort>[\s\S]*cross-provider\.mjs[\s\S]*never replaced by the parent's model/);
+    const setup = readFileSync(join(dir, 'skills/setup-pstack/SKILL.md'), 'utf8');
+    assert.match(setup, /detect seats on other providers[\s\S]*arena cross-judge pool, whose judge answers without writing files[\s\S]*interrogate reviewers, keep native or T3 seats/);
+  }
+});
+
+test('read-only delegates, program state and charts use real host features', () => {
+  const claude = join(root, 'harness/pstack/claude-code');
+  const codex = join(root, 'harness/pstack/codex');
+  assert.match(readFileSync(join(claude, 'agents/poteto-readonly.md'), 'utf8'), /^disallowedTools: Edit, Write, NotebookEdit$/m);
+  assert.equal(existsSync(join(codex, 'agents/poteto-readonly.md')), false);
+  assert.match(readFileSync(join(claude, 'skills/how/SKILL.md'), 'utf8'), /subagent_type: "pstack:poteto-readonly"/);
+  assert.match(readFileSync(join(codex, 'skills/how/SKILL.md'), 'utf8'), /read-only is instructed, not enforced/);
+  for (const dir of [claude, codex]) {
+    assert.doesNotMatch(readFileSync(join(dir, 'skills/poteto-mode/playbooks/orchestrate.md'), 'utf8'), /Project store/);
+    const ketchup = readFileSync(join(dir, 'skills/ketchup/SKILL.md'), 'utf8');
+    assert.match(ketchup, /xychart-beta/);
+    assert.doesNotMatch(ketchup, /visualize|native visualization tools/);
+  }
+});

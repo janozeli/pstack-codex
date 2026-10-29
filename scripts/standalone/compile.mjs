@@ -1,5 +1,5 @@
 import { rewriter } from './edits.mjs';
-import { coordinator, runtime } from './runtime.mjs';
+import { coordinator, readonlyAgent, runtime } from './runtime.mjs';
 
 export function compileMarkdown(path, input, host, skillNames, emit) {
   const edit = rewriter(emit);
@@ -35,7 +35,7 @@ export function compileMarkdown(path, input, host, skillNames, emit) {
   if (path === 'skills/setup-pstack/SKILL.md') {
     section('### 1. Detect available models', '### 2.', `### 1. Detect available models
 
-Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields.`);
+Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields. Then detect seats on other providers: run \`--version\` for each of \`codex\`, \`claude\` and \`grok\` other than this host, and offer each one that answers as \`<provider>:<model> <effort>\` choices for the arena cross-judge pool, whose judge answers without writing files, so its verdict keeps a family other than the parent's. Roles that write candidates, repros or tests, such as arena and architect runners and interrogate reviewers, keep native or T3 seats. In T3, the providers \`orchestrator_capabilities\` lists are the preferred route.`);
     section('### 2. Load current state', '### 3.', `### 2. Load current state
 
 Load the native model configuration. ${codex ? 'Read only the pstack models block in AGENTS.md; unrelated instructions are not role entries.' : 'Read the dedicated pstack-models.md rule file.'} Missing roles use the defaults below. Preserve customized model choices and panel lengths. Drop retired role labels only from this configuration and show them before confirmation.`);
@@ -71,7 +71,8 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   }
   text = edit.replace(text, '1. Install with `/add-plugin pstack` in chat, or from Customize in the sidebar.', '1. Install this distribution using the commands in its README.');
   text = edit.replace(text, /Grok Bot/g, 'automation worker');
-  text = edit.replace(text, /\/visualize/g, 'native visualization tools or a local plotting script');
+  text = edit.replace(text, /`\/visualize` chart/g, 'Mermaid `xychart-beta` chart');
+  text = edit.replace(text, /`\/visualize`/g, 'a Mermaid `xychart-beta` block');
   text = edit.replace(text, /^Shape: one or two questions.*$/m, codex ? 'Use one or two questions with the options accepted by the live question tool. When multi-select is unavailable, ask for the relevant categories in free text. Do not pass unsupported fields.' : 'Use one or two questions with multiSelect only when supported by the live AskUserQuestion schema. Keep options concise and follow its limits.');
   if (codex) text = edit.replace(text, /`subagent_type`/g, 'worker brief');
   const paragraphs = [
@@ -113,6 +114,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   if (path === 'skills/poteto-mode/SKILL.md') section('**Match the model to the job.**', "You own every subagent's work.", '**Match the model to the job.** Start from the configured role and effort. Raise effort one supported step for the hardest work, lower it for routine work, and preserve the requested provider family. Verification keeps the swarm workers role. Split model from effort before dispatch. Use speed controls only if the live schema supports them and urgency warrants them. Never append a speed suffix to a native model ID. Follow the supported-effort fallback in docs/runtime.md; report unavailable models, overrides, and any reduced diversity instead of inventing IDs.');
   text = edit.replace(text, /\*\*Do not use readonly\/Ask mode\.\*\* It strips MCP access, which disables the MCP-backed investigators and the synthesizer's citation spot-checks\./g, 'Keep the tools needed for MCP-backed investigation and citation checks; instruct investigators not to edit.');
   text = edit.replace(text, /, and mention once that a Custom Mode keeps it on\./g, `, and mention once that ${mode} keeps it on.`);
+  text = edit.replace(text, /Keep the program's state in the Project tracker \(`notes\.md`\) and the Project store\./, "Keep the program's state in the coordinator checkout's `notes.md`, one row per task with owner, branch, head SHA, dependencies, evidence and next action.");
   text = edit.replace(text, /^Short works because the playbook holds the structure,.*$/m, `Short works because the playbook holds the structure, and ${mode} keeps poteto-mode in context on every turn. Your words carry the intent, and the skill carries the rigor.`);
   text = edit.replace(text, /It was started with Enter\. Start it as a Custom Mode, or start each task with/g, `Start the session with ${mode}, or start each task with`);
   text = edit.replace(text, /With no path, before any other work, search [\s\S]*?If no such file exists, stop and tell your parent\./g, 'With no parent-supplied path, resolve skills/poteto-mode/SKILL.md from the parent of this installed agents/ directory. If that path cannot be established, stop and tell the parent.');
@@ -131,6 +133,9 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /the root agent's store \(path in the system prompt\)/g, "the coordinator's project-local notes.md");
   text = edit.replace(text, /`agent-transcripts\/` directory the system prompt names/g, 'verified session-history location described in docs/runtime.md');
   text = edit.replace(text, /`agent-transcripts\/` directory/g, 'verified session-history location');
+  text = edit.replace(text, /Every spawn is a Task subagent with `subagent_type: generalPurpose` and `readonly: true`\./, codex
+    ? 'Every spawn is a `spawn_agent` worker told not to edit, with a `git status` check after it returns; Codex workers share the parent\'s sandbox, so read-only is instructed, not enforced.'
+    : 'Every spawn is an `Agent` subagent with `subagent_type: "pstack:poteto-readonly"`, which has no file-editing tools.');
   text = edit.replace(text, /`Task`|\bTask tool\b|\bTask calls?\b|\bTask subagent\b|\bTask spawn\b/g, match => match === '`Task`' ? '`'+tool+'`' : match.replace('Task',tool));
   text = edit.replace(text, /\bAskQuestion\b/g, codex ? 'request_user_input when available' : 'AskUserQuestion');
   text = edit.replace(text, /`subagent_type: (?:"?generalPurpose"?)`/g, codex ? 'a native worker with a complete message' : '`subagent_type: "general-purpose"`');
@@ -175,7 +180,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   if (unresolved.test(text)) throw new Error(`${path}: unresolved host dependency in ${host} output`);
   return text;
 }
-export { coordinator, runtime };
+export { coordinator, readonlyAgent, runtime };
 
 export function compileAudit(input, host, emit) {
   const edit = rewriter(emit);
