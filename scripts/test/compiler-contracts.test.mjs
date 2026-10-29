@@ -60,7 +60,10 @@ for (const [host, tree, judgment, tool, config] of [
     };
     const valid = run(native);
     assert.equal(valid.status, 0, valid.stderr);
-    assert.equal(run(native.replace('persistent monitoring 1h', 'persistent monitoring')).status, 1);
+    const cadence = host === 'Codex' ? 'hourly T3 schedule_task' : '/loop 1h';
+    assert.ok(native.includes(cadence), cadence);
+    assert.equal(run(native.replace(cadence, 'a cadence')).status, 1);
+    assert.equal(run(native.replace('cat <pstack skills dir>/', 'the skills')).status, 1);
     assert.equal(run(native.replace('**Verify, perf.**', '**Other.**')).status, 1);
   });
 

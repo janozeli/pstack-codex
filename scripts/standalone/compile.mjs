@@ -81,8 +81,10 @@ Read the endpoint from the created service. Use the host secret-request mechanis
     [/^From here you can type normal follow-ups\..*$/m, `Continue with normal follow-ups. ${modeSetup}`],
     [/^If you run several agents against one repository on one computer,.*$/m, 'Give independent writers separate worktrees through the host isolation tool. Worktrees share the machine: allocate ports and outputs separately. A lane requiring a separate machine stays blocked until the host supplies one.'],
     [/^A \[Cursor Project\].*$/m, 'Use a persistent coordinator thread and supported worker isolation for a standing project. Record program state in notes.md or host project state tools. Work continues after the session ends only when the host provides a persistent execution service.'],
-    [/^- `\/loop` is Cursor.*$/m, '- Persistent monitoring uses the host watcher or scheduler. Without one, only the current round can run.'],
-    [/^- `\/loop` and `\/create-skill` are Cursor built-ins\.$/m, '- Monitoring and skill authoring use the bundled runtime procedures and available host tools.'],
+    [/^- `\/loop` is Cursor.*$/m, codex
+      ? '- `/goal` is Codex\'s built-in way to keep working until a finish condition holds, not a pstack skill. The [Autonomous run playbook](../../skills/poteto-mode/playbooks/autonomous-run.md) uses it with the bundled `watch-pr` for events. A timed heartbeat needs T3 `schedule_task`.'
+      : '- `/loop` is Claude Code\'s built-in wake mechanism, not a pstack skill. The [Autonomous run playbook](../../skills/poteto-mode/playbooks/autonomous-run.md) uses it to re-check the finish condition on events or a heartbeat.'],
+    [/^- `\/loop` and `\/create-skill` are Cursor built-ins\.$/m, codex ? '- `/goal` is a Codex built-in. Skill authoring uses the procedure in docs/runtime.md.' : '- `/loop` is a Claude Code built-in. Skill authoring uses the procedure in docs/runtime.md.'],
   ];
   for (const [pattern, replacement] of paragraphs) text = edit.replace(text, pattern, replacement);
   if (codex && path === 'docs/guide/01-setup.md') {
@@ -104,6 +106,10 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /a new cloud VM/g, 'an isolated checkout');
   text = edit.replace(text, /Set `model` to that line's value, or to the default if the rule or the line is missing\./g, 'Resolve that role value, or its default, into model and effort through docs/runtime.md before dispatch.');
   text = edit.replace(text, /docs\/harness\/(?:codex|claude-code)\.md/g, 'docs/runtime.md');
+  text = edit.replace(text, /git show origin\/main:(?:pstack\/skills\/)?/g, 'cat <pstack skills dir>/');
+  text = edit.replace(text, /(this playbook|these|the execution playbook) from trunk/g, '$1 from the installed package');
+  text = edit.replace(text, /node pstack\/skills\//g, 'node <pstack skills dir>/');
+  text = edit.replace(text, /`pstack\/skills\//g, '`<pstack skills dir>/');
   if (path === 'skills/poteto-mode/SKILL.md') section('**Match the model to the job.**', "You own every subagent's work.", '**Match the model to the job.** Start from the configured role and effort. Raise effort one supported step for the hardest work, lower it for routine work, and preserve the requested provider family. Verification keeps the swarm workers role. Split model from effort before dispatch. Use speed controls only if the live schema supports them and urgency warrants them. Never append a speed suffix to a native model ID. Follow the supported-effort fallback in docs/runtime.md; report unavailable models, overrides, and any reduced diversity instead of inventing IDs.');
   text = edit.replace(text, /\*\*Do not use readonly\/Ask mode\.\*\* It strips MCP access, which disables the MCP-backed investigators and the synthesizer's citation spot-checks\./g, 'Keep the tools needed for MCP-backed investigation and citation checks; instruct investigators not to edit.');
   text = edit.replace(text, /, and mention once that a Custom Mode keeps it on\./g, `, and mention once that ${mode} keeps it on.`);
@@ -141,11 +147,15 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /^Not in pstack:\n\n- `\/deslop`, `control-cli`, and `control-ui` ship in the `cursor-team-kit` plugin\.\n/m, 'This package also bundles `/deslop`, `control-cli`, and `control-ui`.\n\nNot in pstack:\n\n');
   text = edit.replace(text, /`\/deslop` ships in the `cursor-team-kit` plugin, not in pstack\. If you don't have it, ask for the same outcome in plain words: [^\n]*? edits\./, '`/deslop` ships bundled with this package.');
   text = edit.replace(text, /(?:from|in) (?:the )?`cursor-team-kit`(?: plugin)?/g, 'bundled with this package');
-  text = edit.replace(text, /Cursor's `\/loop` command(?: \(a built-in, not a pstack skill\))?/g, 'the host-supported persistent watcher');
+  text = edit.replace(text, /Cursor's `\/loop` command(?: \(a built-in, not a pstack skill\))?/g, codex ? "Codex's built-in `/goal` command (not a pstack skill), with the bundled `watch-pr` for events and T3 `schedule_task` for a timed heartbeat" : "Claude Code's built-in `/loop` command (not a pstack skill)");
   text = edit.replace(text, /Cursor cloud agent/g, 'isolated worker');
   text = edit.replace(text, /\bCursor environment\b/g, `${host} environment`);
   text = edit.replace(text, /\/?create-skill/g, 'skill-authoring procedure');
-  text = edit.replace(text, /\/loop/g, 'persistent monitoring');
+  // Claude Code has the same built-in /loop. Codex continues with /goal; only T3 schedules a timed tick.
+  if (codex) {
+    text = edit.replace(text, /`?\/loop 1h`?/g, 'an hourly T3 schedule_task tick');
+    text = edit.replace(text, /\/loop/g, '/goal');
+  }
   for (const skill of skillNames) {
     text = edit.replace(text, new RegExp('(?<![\\w/:])/'+skill+'(?![\\w/-])','g'), invoke+skill);
   }
@@ -185,7 +195,9 @@ export function compileAudit(input, host, emit) {
   return output;
 }
 
-export function compilePlanChecker(input, emit) {
-  if (!input.includes('/loop 1h')) throw new Error('plan checker source cadence changed');
-  return rewriter(emit).replaceAll(input, '/loop 1h', 'persistent monitoring 1h');
+export function compilePlanChecker(input, host, emit) {
+  if (!input.includes('/loop 1h') || !input.includes('git show origin/main:')) throw new Error('plan checker source markers changed');
+  const edit = rewriter(emit);
+  const output = edit.replaceAll(input, 'git show origin/main:', 'cat <pstack skills dir>/');
+  return host === 'Codex' ? edit.replaceAll(output, '/loop 1h', 'hourly T3 schedule_task') : output;
 }

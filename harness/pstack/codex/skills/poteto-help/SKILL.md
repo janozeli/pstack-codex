@@ -117,7 +117,7 @@ This package also bundles `$pstack:deslop`, `control-cli`, and `control-ui`.
 
 Not in pstack:
 
-- Monitoring and skill authoring use the bundled runtime procedures and available host tools.
+- `/goal` is a Codex built-in. Skill authoring uses the procedure in docs/runtime.md.
 - pstack has no `/orchestrate` skill. Orchestrate is a `$pstack:poteto-mode` playbook. If the slash menu shows `/orchestrate`, another plugin provides it.
 
 ## Playbooks and principles
@@ -147,7 +147,7 @@ Principles are one-rule skills that `$pstack:poteto-mode` reads and cites in its
 | Runs cost more than expected | See the cost paragraph under Get set up. |
 | A skill didn't load on its own | Only `$pstack:setup-pstack` loads from the user's words. The others load when the user types them or when `$pstack:poteto-mode` runs them, and it doesn't run every skill. |
 | Parallel agents overwrote each other | Give each agent its own worktree, or run them as cloud agents, which each get their own machine. |
-| An overnight run moved but finished nothing | `persistent monitoring` needs a check that can pass or fail, not a duration. See [guide page 7](../../docs/guide/07-overnight.md). |
+| An overnight run moved but finished nothing | `/goal` needs a check that can pass or fail, not a duration. See [guide page 7](../../docs/guide/07-overnight.md). |
 | The reply claims success from a green build | Ask for the real command, flow, stored value, or profile. That's the prove-it-works principle. |
 
 For a run that drifts, [`references/prompting.md`](references/prompting.md) has one-line steers. [Guide page 10](../../docs/guide/10-recipes-and-pitfalls.md) has more pitfalls and the recipes worth copying.

@@ -20,7 +20,7 @@ ${rule}
 ### PR mechanics
 ### Verdict and merge
 ### Boot recipe
-\`git show origin/main:\` persistent monitoring 1h status message
+\`cat <pstack skills dir>/\` /loop 1h status message
 
 ## PR 1
 **Depends on.** None.

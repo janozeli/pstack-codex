@@ -1,6 +1,6 @@
 # pstack runtime for Claude Code
 
-These are the native execution contracts for this distribution. Host instructions and live tool schemas take precedence. All skill files, playbooks, and supporting references are shipped in this package. Resolve paths relative to the installed package; do not fetch another distribution to execute a skill.
+These are the native execution contracts for this distribution. Host instructions and live tool schemas take precedence. All skill files, playbooks, and supporting references are shipped in this package. Resolve paths relative to the installed package; do not fetch another distribution to execute a skill. <pstack skills dir> is this package's skills directory, the parent of the poteto-mode skill folder.
 
 ## Delegation
 
@@ -23,7 +23,7 @@ The installed worktree-audit.sh selects this host's history reader. A review-his
 
 ## Capability-dependent work
 
-Use the host's plan and question tools. An unanswered required choice is not consent. Use a permitted persistent watcher for ongoing monitoring; without one, complete only the current round and report the missing continuation capability. In T3, use its PR watcher lifecycle and linking rules.
+Use the host's plan and question tools. An unanswered required choice is not consent. Re-check a finish condition with the built-in /loop command, at an interval such as /loop 1h or self-paced, and wake on PR events with the Monitor tool around the bundled watch-pr script. In T3, PR events also arrive through watch_pull_request. Follow T3's PR watcher lifecycle and linking rules when it is the host.
 Verify a CLI or TUI with the bundled control-cli skill and a web, IDE or Electron UI with the bundled control-ui skill; Claude Code's --chrome browser is another driver for control-ui. Without a working driver, live verification is incomplete. Unit tests are not a substitute for an interactive lane.
 For skill authoring, use an installed authoring skill when available; otherwise follow the repository's skill format, validate frontmatter and local links, and test the resulting instructions on the intended task. Before commit, clean code with the bundled deslop skill and prose with the bundled unslop skill. Name the checks actually run.
 Use project state tools when available, otherwise keep task IDs, owners, branches, dependencies, evidence, and next actions in project-local notes.md and pass relevant state to children. A fresh child does not inherit another worker's processes: reconstruct and revalidate the environment when a process fork is unavailable.
