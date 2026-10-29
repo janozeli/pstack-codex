@@ -47,36 +47,46 @@ async function* transcripts(directory) {
   }
 }
 
-// The content size a zstd frame header declares, or null when the header omits it.
-function declaredSize(frame) {
-  if (frame.readUInt32LE(0) !== 0xfd2fb528) throw new Error("a compressed rollout is not a zstd frame");
+// Reads one zstd frame's header and walks its block headers, so a cut, an unterminated
+// frame, a missing checksum or trailing bytes fail instead of decoding a prefix.
+function frameSize(frame) {
+  if (frame.length < 6 || frame.readUInt32LE(0) !== 0xfd2fb528) throw new Error("a compressed rollout is not a zstd frame");
   const descriptor = frame[4];
   const single = (descriptor >> 5) & 1;
   const sizeBytes = [single, 2, 4, 8][descriptor >> 6];
-  const offset = 5 + (single ? 0 : 1) + [0, 1, 2, 4][descriptor & 3];
-  if (sizeBytes === 0) return null;
-  if (sizeBytes === 1) return frame[offset];
-  if (sizeBytes === 2) return frame.readUInt16LE(offset) + 256;
-  return sizeBytes === 4 ? frame.readUInt32LE(offset) : Number(frame.readBigUInt64LE(offset));
+  let offset = 5 + (single ? 0 : 1) + [0, 1, 2, 4][descriptor & 3];
+  let size = null;
+  if (sizeBytes === 1) size = frame[offset];
+  else if (sizeBytes === 2) size = frame.readUInt16LE(offset) + 256;
+  else if (sizeBytes === 4) size = frame.readUInt32LE(offset);
+  else if (sizeBytes === 8) size = Number(frame.readBigUInt64LE(offset));
+  offset += sizeBytes;
+  for (let last = 0; !last;) {
+    if (offset + 3 > frame.length) throw new Error("a compressed rollout is incomplete");
+    const header = frame.readUIntLE(offset, 3);
+    last = header & 1;
+    offset += 3 + (((header >> 1) & 3) === 1 ? 1 : header >> 3);
+  }
+  if (offset + ((descriptor >> 2) & 1) * 4 !== frame.length) throw new Error("a compressed rollout is incomplete");
+  return size;
 }
 
 // Codex compresses older rollouts to .jsonl.zst. Node's zstd decoder accepts a truncated
-// frame silently, so a compressed rollout counts only when it decodes to its declared size.
+// frame silently, so a compressed rollout counts only as a complete frame.
 async function* text(path) {
   if (!path.endsWith(".zst")) {
     yield* createReadStream(path, { encoding: "utf8" });
     return;
   }
   const frame = await readFile(path);
-  const size = declaredSize(frame);
-  if (size === null) throw new Error("a compressed rollout does not declare its size");
+  const size = frameSize(frame);
   const decoder = new StringDecoder("utf8");
   let decoded = 0;
   for await (const chunk of Readable.from([frame]).pipe(createZstdDecompress())) {
     decoded += chunk.length;
     yield decoder.write(chunk);
   }
-  if (decoded !== size) throw new Error("a compressed rollout is incomplete");
+  if (size !== null && decoded !== size) throw new Error("a compressed rollout is incomplete");
   yield decoder.end();
 }
 

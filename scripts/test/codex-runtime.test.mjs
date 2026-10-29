@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { zstdCompressSync } from "node:zlib";
+import { constants, zstdCompressSync } from "node:zlib";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = join(root, "pstack/skills/poteto-mode/scripts");
@@ -129,11 +129,20 @@ test("a truncated compressed rollout needs review instead of safe cleanup", (t) 
   const filler = Array.from({ length: 20000 }, (_, i) => JSON.stringify({ type: "event_msg", payload: { message: `step ${i}` } })).join("\n");
   writeFileSync(path, `${readFileSync(path, "utf8")}${filler}\n${JSON.stringify({ type: "event_msg", payload: { message: `inspect '${f.worktree}/file.ts'` } })}\n`);
   const compressed = zstdCompressSync(readFileSync(path));
+  const checksummed = zstdCompressSync(readFileSync(path), { params: { [constants.ZSTD_c_checksumFlag]: 1 } });
   rmSync(path);
   for (const cut of [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]) {
     writeFileSync(`${path}.zst`, compressed.subarray(0, compressed.length - cut));
     assert.equal(f.audit().bucket, "review-history", `cut ${cut}`);
   }
+  for (const cut of [1, 2, 3, 4]) {
+    writeFileSync(`${path}.zst`, checksummed.subarray(0, checksummed.length - cut));
+    assert.equal(f.audit().bucket, "review-history", `checksum cut ${cut}`);
+  }
+  writeFileSync(`${path}.zst`, Buffer.concat([compressed, Buffer.from("trailing")]));
+  assert.equal(f.audit().bucket, "review-history", "trailing bytes");
+  writeFileSync(`${path}.zst`, checksummed);
+  assert.equal(f.audit().bucket, "verify-recent-chat", "complete checksummed frame");
 });
 
 test("an unreadable compressed rollout needs review instead of safe cleanup", (t) => {
