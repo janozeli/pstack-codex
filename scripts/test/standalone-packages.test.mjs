@@ -172,3 +172,19 @@ test('monitoring maps to each host native command', () => {
   assert.match(codex, /\/goal/);
   assert.match(readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8'), /schedule_task/);
 });
+
+test('each runtime names its host isolation, authoring and review tools', () => {
+  const claude = readFileSync(join(root, 'harness/pstack/claude-code/docs/runtime.md'), 'utf8');
+  const codex = readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8');
+  assert.match(claude, /isolation: "worktree"/);
+  assert.match(claude, /claude --cloud/);
+  assert.match(claude, /skill-creator plugin/);
+  assert.match(codex, /git worktree add/);
+  assert.match(codex, /codex cloud exec/);
+  assert.match(codex, /\$skill-creator/);
+  for (const text of [claude, codex]) {
+    assert.match(text, /orchestrator_capabilities/);
+    assert.match(text, /Bugbot steps do not apply/);
+    assert.ok(existsSync(join(root, 'harness/pstack/codex/skills/poteto-mode/references/bugbot-triage.md')));
+  }
+});
