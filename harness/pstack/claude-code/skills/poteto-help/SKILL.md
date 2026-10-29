@@ -10,7 +10,7 @@ Follow the [native runtime contracts](../../docs/runtime.md) for delegation, con
 
 Answer the user's question about pstack, hand them a prompt they can send, and link the file the answer came from. For a help question, don't start the work. The user asked how, and a pstack run spends real tokens, so let them send the prompt.
 
-A message that asks for work, such as "use pstack to fix this bug", is not a help question. Read [`poteto-mode`](../poteto-mode/SKILL.md), do the work under it.
+A message that asks for work, such as "use pstack to fix this bug", is not a help question. Read [`poteto-mode`](../poteto-mode/SKILL.md), do the work under it, and mention once that `claude --agent pstack:poteto-mode` keeps it on.
 
 This file maps questions to the skills and guide pages that hold the answers. Those files own the details. Read the file you route to before you quote it, and trust it when it disagrees with this map. The links here point into the installed plugin, which the user may not be able to open, so give the user the file's public copy: `https://github.com/janozeli/pstack-port/blob/main/pstack/` followed by its path.
 
@@ -51,7 +51,7 @@ This is the standalone Claude Code distribution. Follow the installed README for
 
 `/pstack:poteto-mode` matches the task to a playbook, copies the playbook's steps into the todo list, and runs the other skills as the steps need them. A step it skips stays in the list as `skip: <reason>`. A good prompt states the goal and how to tell it's done. It doesn't list skills, because a hand-written sequence tends to drop or reorder steps the playbook would keep. Read [`references/prompting.md`](references/prompting.md) before you help word one. [Guide page 2](../../docs/guide/02-poteto-mode.md) has examples.
 
-Invoke the skill for each new task and continue with normal follow-ups. Do not assume a persistent mode UI. A new task asks the coordinator to select a fresh playbook. Children receive the complete brief and installed agent instructions.
+Whether poteto-mode stays on depends on how the user starts it. Invoking it with a task loads the skill for that task, and it can fade as the chat moves on. To keep poteto-mode on for the whole session, the counterpart of the author's Custom Mode, start Claude Code with `claude --agent pstack:poteto-mode`. That coordinator reads the skill for each new task and after compaction. Otherwise invoke `/pstack:poteto-mode` again for each new task. A new task asks the coordinator to select a fresh playbook. Children receive the complete brief and installed agent instructions.
 
 ## Pick a skill
 
@@ -132,7 +132,7 @@ Principles are one-rule skills that `/pstack:poteto-mode` reads and cites in its
 
 | Symptom | Fix |
 |---|---|
-| The mode stopped applying after a few turns | Invoke the skill for each new task with `/pstack:poteto-mode`. |
+| The mode stopped applying after a few turns | Start the session with `claude --agent pstack:poteto-mode`, or start each task with `/pstack:poteto-mode`. |
 | A question got treated as the next step of the last task | Say "new task", or say the turn doesn't need the mode. |
 | A new model choice had no effect | The rule from `/pstack:setup-pstack` applies to new chats. Start one. |
 | Runs cost more than expected | See the cost paragraph under Get set up. |

@@ -9,7 +9,7 @@ These are the native execution contracts for this distribution. Host instruction
 
 ## Delegation
 
-Use \`${tool}\` when the host permits native delegation. ${codex ? "Pass task_name and message. For an explicitly configured model or effort, use fork_turns: none when required and provide the full brief. Collect results with wait_agent." : "Pass prompt and the supported subagent_type. The bundled agents are pstack:poteto-agent and pstack:comment-sicko. Give each child its absolute skill path and complete task context."}
+Use \`${tool}\` when the host permits native delegation. ${codex ? "Pass task_name and message. For an explicitly configured model or effort, use fork_turns: none when required and provide the full brief. Collect results with wait_agent." : "Pass prompt and the supported subagent_type. The bundled delegate agents are pstack:poteto-agent and pstack:comment-sicko. pstack:poteto-mode is the main-session coordinator started with claude --agent; never spawn it. Give each child its absolute skill path and complete task context."}
 In T3, follow its delegation contract for different providers, explicit settings, background work, and isolated worktrees. That tool creates the child's checkout. Never create a child's checkout in the shell there. Native worktrees isolate files, not machines, processes, ports, or credentials. If a separate machine is required, verify an actual remote environment is available before executing that lane.
 Read-only is an instruction unless the host enforces a sandbox: say do not edit, select tools consistent with the task, and inspect git status afterward. Preserve the requested model and required MCP access. Use fresh children unless the skill explicitly allows reuse. Follow host completion notifications; do not report a result before receiving it.
 ${codex ? "For poteto-agent or comment-sicko, begin the child brief by requiring a full read of the corresponding agents/<name>.md file." : "Keep native foreground children in the foreground when the host requires it. Do not force background execution through agent metadata."}
@@ -23,7 +23,7 @@ Keep the source role list and panel lengths. Inherited aliases belong to the par
 ## Session evidence
 
 ${codex ? "History is under $CODEX_HOME/sessions and archived_sessions (default ~/.codex), as rollout-*.jsonl files or zstd-compressed rollout-*.jsonl.zst files. Validate session_meta.payload.id and payload.cwd." : "History is under $CLAUDE_CONFIG_DIR/projects (default ~/.claude/projects), one folder per workspace named after its path with each / and . replaced by -. Validate sessionId and cwd; file-history snapshots can precede conversation records."}
-${codex ? "This conversation's thread ID is $CODEX_THREAD_ID in the shell, and its rollout file name ends with that ID." : "This conversation's session ID is the value the poteto-mode, reflect and show-me-your-work skills state when invoked. Its transcript is <workspace folder>/<session ID>.jsonl, and its subagents are under <session ID>/subagents/."} Never pick the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
+${codex ? "This conversation's thread ID is $CODEX_THREAD_ID in the shell, and its rollout file name ends with that ID." : "This conversation's session ID is the value the poteto-mode, reflect and show-me-your-work skills state when invoked. A skill file opened with Read shows the unsubstituted placeholder instead, and then the ID is unavailable. Its transcript is <workspace folder>/<session ID>.jsonl, and its subagents are under <session ID>/subagents/."} Never pick the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
 The installed worktree-audit.sh selects this host's history reader. A review-history bucket requires investigation, not deletion. Chat activity never authorizes cleanup by itself.
 
 ## Capability-dependent work
@@ -35,3 +35,14 @@ Use project state tools when available, otherwise keep task IDs, owners, branche
 Automation and webhook work requires a real host integration and secret delivery mechanism. Resolve them before dependent execution. Never invent service URLs, secrets, API fields, or a successful probe. A placeholder may support a draft but cannot satisfy verification or deployment. Keep independent work moving and leave blocked gates explicitly incomplete.
 `;
 }
+
+// Claude Code has no Custom Mode toggle; a main-session agent keeps poteto-mode on for every turn.
+export const coordinator = `---
+name: poteto-mode
+description: Main-session coordinator that keeps poteto-mode on for every task, the Claude Code counterpart of starting poteto-mode as a Custom Mode. Start it with \`claude --agent pstack:poteto-mode\`. Never spawn it as a subagent.
+---
+
+# Poteto mode coordinator
+
+You are the chat that runs poteto-mode for this whole session. Before your first reply on each new task, and again after any context compaction, read \`\${CLAUDE_PLUGIN_ROOT}/skills/poteto-mode/SKILL.md\` in full and follow it. That file owns the playbooks, principles, and delegation rules; put its absolute path in every \`pstack:poteto-agent\` brief. A casual turn that asks for no work needs no playbook.
+`;

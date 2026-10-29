@@ -53,6 +53,14 @@ $pstack:poteto-mode add a --json flag to this command. text output stays byte-id
 
 Watch the todo list. Its first items are the matched playbook's steps copied in, the Feature playbook for this prompt. If `$pstack:poteto-mode` skips a step, the step stays in the list with `skip: <reason>`, so you can see what it chose not to do.
 
-Continue with normal follow-ups. Invoke the skill again for each new task; do not assume a persistent mode UI.
+Continue with normal follow-ups. To keep poteto-mode on for the whole session, the counterpart of the author's Custom Mode, save this profile as `$CODEX_HOME/poteto.config.toml` (default `~/.codex/poteto.config.toml`) and start Codex with `codex -p poteto`:
+
+```toml
+developer_instructions = """
+Keep pstack's poteto-mode on for this whole session. Before your first reply on each new task, and again after any context compaction, read the installed poteto-mode skill in full and follow it: the newest $CODEX_HOME/plugins/cache/*/pstack/*/skills/poteto-mode/SKILL.md, with CODEX_HOME defaulting to ~/.codex. A casual turn that asks for no work needs no playbook.
+"""
+```
+
+Otherwise invoke `$pstack:poteto-mode` again for each new task.
 
 Next: [Route work through `$pstack:poteto-mode`](./02-poteto-mode.md).

@@ -53,6 +53,6 @@ Pick something real but small, and describe it the way you'd describe it to a co
 
 Watch the todo list. Its first items are the matched playbook's steps copied in, the Feature playbook for this prompt. If `/pstack:poteto-mode` skips a step, the step stays in the list with `skip: <reason>`, so you can see what it chose not to do.
 
-Continue with normal follow-ups. Invoke the skill again for each new task; do not assume a persistent mode UI.
+Continue with normal follow-ups. To keep poteto-mode on for the whole session, the counterpart of the author's Custom Mode, start Claude Code with `claude --agent pstack:poteto-mode`. That coordinator reads the skill for each new task and after compaction. Otherwise invoke `/pstack:poteto-mode` again for each new task.
 
 Next: [Route work through `/pstack:poteto-mode`](./02-poteto-mode.md).

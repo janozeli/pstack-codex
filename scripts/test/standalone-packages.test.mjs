@@ -127,3 +127,20 @@ test('Claude skills that audit this conversation state its session ID', () => {
   }
   assert.match(readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8'), /\$CODEX_THREAD_ID/);
 });
+
+test('each host documents a session that keeps poteto-mode on', () => {
+  const claude = join(root, 'harness/pstack/claude-code');
+  const codex = join(root, 'harness/pstack/codex');
+  const agent = readFileSync(join(claude, 'agents/poteto-mode.md'), 'utf8');
+  assert.match(agent, /^name: poteto-mode$/m);
+  assert.match(agent, /\$\{CLAUDE_PLUGIN_ROOT\}\/skills\/poteto-mode\/SKILL\.md/);
+  assert.equal(existsSync(join(codex, 'agents/poteto-mode.md')), false);
+  assert.match(readFileSync(join(claude, 'docs/guide/01-setup.md'), 'utf8'), /claude --agent pstack:poteto-mode/);
+  const codexSetup = readFileSync(join(codex, 'docs/guide/01-setup.md'), 'utf8');
+  assert.match(codexSetup, /poteto\.config\.toml/);
+  assert.match(codexSetup, /developer_instructions = """/);
+  assert.match(codexSetup, /codex -p poteto/);
+  for (const dir of [claude, codex]) {
+    for (const file of walk(dir).filter(path => path.endsWith('.md'))) assert.doesNotMatch(readFileSync(file, 'utf8'), /persistent mode UI/, file);
+  }
+});

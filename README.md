@@ -25,6 +25,8 @@ Start a new session, then run setup and a first task. Claude Code prefixes comma
 /pstack:poteto-mode reproduce this bug, fix it, and verify the result
 ```
 
+To keep poteto-mode on for a whole session, the counterpart of the author's Custom Mode, start Claude Code with `claude --agent pstack:poteto-mode`, or create the `codex -p poteto` profile described in the Codex [setup guide](harness/pstack/codex/docs/guide/01-setup.md).
+
 For help, use `/pstack:poteto-help` or `$pstack:poteto-help`. In Claude Code, update with `claude plugin update pstack@pstack-port`.
 
 The plugin keeps the `pstack` namespace. If another pstack distribution is enabled, disable that copy before enabling this one.
