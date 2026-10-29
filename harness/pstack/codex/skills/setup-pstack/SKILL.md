@@ -42,23 +42,23 @@ In $CODEX_HOME/AGENTS.md (default ~/.codex/AGENTS.md), replace only the block be
 
 ```
 # budget: large (xhigh)
-feature, refactoring: inherit-parent xhigh
-bug-fix: inherit-parent xhigh
-perf-issue: inherit-parent xhigh
-hillclimb: inherit-parent xhigh
-judgment and prose: inherit-parent xhigh
-hardest tasks: inherit-parent xhigh
-how explorer: inherit-parent xhigh
-how explainer: inherit-parent xhigh
-why investigators: inherit-parent xhigh
-why synthesizer: inherit-parent xhigh
-reflect tooling: inherit-parent xhigh
-reflect judgment, divergent, synthesizer: inherit-parent xhigh
-arena runners: inherit-parent xhigh, inherit-parent xhigh
-arena cross-judge pool: inherit-parent xhigh, inherit-parent xhigh
-swarm workers: inherit-parent xhigh
-architect runners: inherit-parent xhigh, inherit-parent xhigh
-interrogate reviewers: inherit-parent xhigh, inherit-parent xhigh
+feature, refactoring: gpt-6-luna xhigh
+bug-fix: gpt-6-luna xhigh
+perf-issue: gpt-6-luna xhigh
+hillclimb: gpt-6-luna xhigh
+judgment and prose: gpt-6-astra xhigh
+hardest tasks: gpt-6-astra xhigh
+how explorer: gpt-6-luna xhigh
+how explainer: gpt-6-astra xhigh
+why investigators: gpt-6-luna xhigh
+why synthesizer: gpt-6-astra xhigh
+reflect tooling: gpt-6-luna xhigh
+reflect judgment, divergent, synthesizer: gpt-6-astra xhigh
+arena runners: gpt-6-astra xhigh, gpt-6-luna xhigh
+arena cross-judge pool: gpt-6-astra xhigh, gpt-6-luna xhigh
+swarm workers: gpt-6-luna xhigh
+architect runners: gpt-6-astra xhigh, gpt-6-luna xhigh
+interrogate reviewers: gpt-6-astra xhigh, gpt-6-luna xhigh
 ```
 
 ### 6. Confirm

@@ -20,8 +20,10 @@ structure SourceModel where
   fast : Bool
   deriving DecidableEq, Repr
 
+-- Each host keeps the author's two roles on its own models: her Opus seats take
+-- the host's strongest model, her Grok seats its fast model.
 inductive NativeFamily where
-  | inherited | opus
+  | opus | haiku | astra | luna
   deriving DecidableEq, Repr
 
 structure NativeModel where
@@ -32,7 +34,9 @@ structure NativeModel where
 def translate (host : Host) (source : SourceModel) : NativeModel :=
   { family := match host, source.family with
       | .claude, .opus => .opus
-      | _, _ => .inherited
+      | .claude, .grok => .haiku
+      | .codex, .opus => .astra
+      | .codex, .grok => .luna
     effort := source.effort }
 
 structure Role (α : Type) where
@@ -50,12 +54,20 @@ theorem effort_preserved (host : Host) (source : SourceModel) :
     (translate host source).effort = source.effort := by
   rfl
 
-theorem codex_inherits (source : SourceModel) :
-    (translate .codex source).family = .inherited := by
-  rfl
-
 theorem claude_opus_preserved (effort : Effort) (fast : Bool) :
     (translate .claude ⟨.opus, effort, fast⟩).family = .opus := by
+  rfl
+
+theorem claude_grok_is_haiku (effort : Effort) (fast : Bool) :
+    (translate .claude ⟨.grok, effort, fast⟩).family = .haiku := by
+  rfl
+
+theorem codex_opus_is_astra (effort : Effort) (fast : Bool) :
+    (translate .codex ⟨.opus, effort, fast⟩).family = .astra := by
+  rfl
+
+theorem codex_grok_is_luna (effort : Effort) (fast : Bool) :
+    (translate .codex ⟨.grok, effort, fast⟩).family = .luna := by
   rfl
 
 theorem fast_does_not_change_model (host : Host) (family : Family) (effort : Effort) :
@@ -79,7 +91,8 @@ def effortText : Effort → String
   | .xhigh => "xhigh" | .max => "max"
 
 def render (model : NativeModel) : String :=
-  (match model.family with | .inherited => "inherit-parent" | .opus => "opus") ++
+  (match model.family with
+    | .opus => "opus" | .haiku => "haiku" | .astra => "gpt-6-astra" | .luna => "gpt-6-luna") ++
     " " ++ effortText model.effort
 
 def invocation (host : Host) (skill : String) : String :=
