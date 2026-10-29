@@ -1,9 +1,10 @@
 {
-  "reviewedAt": "08ca473ff49ccf2b62960bd80f714b4100ce1d46",
+  "reviewedAt": "1c8dbd621e2ef0c8487d700d42826a27ee01039e",
   "sha256": {
-    "scripts/standalone/compile.mjs": "08b4515dd9187772c865fd3e0430541edac89eb4d8b453873e651c9f211d00a5",
+    "scripts/standalone/compile.mjs": "4b68cf0e363b74b7590930c5158bce58b8a7c59f02993db0a556f32b93ed42ca",
     "scripts/standalone/runtime.mjs": "9327661851845447ad75060427892b2af89b0e01547ffa9d788c07624c51ec43",
-    "scripts/generate-pstack-harness-trees.mjs": "e030ec7a716b8891cb997af610ca758c618dc2761621ef970dd43bddbe5d1b6e",
-    "pstack/skills/setup-pstack/SKILL.md": "df8ad3638a4dca31fb4b43d58056f0299f23ad0530614166d55ef989062b41ec"
+    "scripts/generate-pstack-harness-trees.mjs": "da8c6dfda48eaf6fe3f975295d2d95d98f8f801a4038e06fcb025c2107d27b2f",
+    "pstack/skills/setup-pstack/SKILL.md": "df8ad3638a4dca31fb4b43d58056f0299f23ad0530614166d55ef989062b41ec",
+    "scripts/standalone/edits.mjs": "a0b74b373c6f92be7062c7bfe2b507143d893d3ab6d7c6a4dd78f29dedaff233"
   }
 }

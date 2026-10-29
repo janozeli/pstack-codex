@@ -5,6 +5,8 @@ import { dirname, join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileMarkdown, compileAudit, compilePlanChecker, runtime } from "./standalone/compile.mjs";
 
+import { rewriter } from "./standalone/edits.mjs";
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PSTACK = join(ROOT, "pstack");
 const SKILLS = join(PSTACK, "skills");
@@ -75,7 +77,8 @@ function has(files, path) {
   return files.has(path) || [...files.keys()].some((key) => key.startsWith(`${path}/`));
 }
 
-function render({ harness, manifests, manifestFields, userInvoked: policy }) {
+function render({ harness, manifests, manifestFields, userInvoked: policy }, emit) {
+  const trace = (path) => (step) => emit?.(path, step);
   // Compile the shared methodology into native instructions before packaging.
   const copies = [
     ...walk(SKILLS),
@@ -88,14 +91,14 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }) {
   files.delete(`skills/poteto-mode/scripts/${nativeHistory === "codex" ? "claude" : "codex"}-worktree-activity.mjs`);
   for (const name of ['check-plan.mjs', 'check-plan.test.ts']) {
     const entry = files.get(`skills/poteto-mode/scripts/${name}`);
-    entry.bytes = Buffer.from(compilePlanChecker(entry.bytes.toString('utf8')));
+    entry.bytes = Buffer.from(compilePlanChecker(entry.bytes.toString('utf8'), trace(`skills/poteto-mode/scripts/${name}`)));
   }
   const audit = files.get("skills/poteto-mode/scripts/worktree-audit.sh");
-  audit.bytes = Buffer.from(compileAudit(audit.bytes.toString("utf8"), harness));
+  audit.bytes = Buffer.from(compileAudit(audit.bytes.toString("utf8"), harness, trace("skills/poteto-mode/scripts/worktree-audit.sh")));
   files.set("docs/runtime.md", { bytes: Buffer.from(runtime(harness)), executable: false });
   for (const [path, entry] of files) {
     if (path.endsWith(".md") && path !== "docs/runtime.md") {
-      entry.bytes = Buffer.from(compileMarkdown(path, entry.bytes.toString("utf8"), harness, skills));
+      entry.bytes = Buffer.from(compileMarkdown(path, entry.bytes.toString("utf8"), harness, skills, trace(path)));
     }
   }
   files.set("LICENSE", file(join(PSTACK, "LICENSE")));
@@ -109,7 +112,7 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }) {
   }
   for (const [path, entry] of files) {
     if (!path.endsWith(".md")) continue;
-    const text = entry.bytes.toString("utf8").replace(LINK, (link, href) => {
+    const text = rewriter(trace(path)).replace(entry.bytes.toString("utf8"), LINK, (link, href) => {
       const target = resolve(path, href);
       if (!target || target.split("/")[0] === ".." || has(files, target)) return link;
       const kind = statSync(join(PSTACK, target)).isDirectory() ? "tree" : "blob";
@@ -120,6 +123,9 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }) {
   return files;
 }
 
+export { render, TARGETS };
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // Each harness installs only its tree, so a relative link that works from pstack/ has to work inside the tree too.
 // Links to pstack files that the tree leaves out already point at GitHub, so a failure here is a link that leaves pstack/.
 const rendered = new Map([["README.md", { bytes: Buffer.from(README), executable: false }]]);
@@ -158,4 +164,6 @@ if (process.argv.includes("--check")) {
     chmodSync(join(OUT, path), executable ? 0o755 : 0o644);
   }
   console.log(`${skills.length} standalone skills per host; ${userInvoked.size} hidden from the Codex model`);
+}
+
 }
