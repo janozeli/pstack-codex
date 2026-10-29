@@ -123,6 +123,19 @@ test("a compressed Codex rollout counts as activity", (t) => {
   assert.equal(f.audit().bucket, "verify-recent-chat");
 });
 
+test("a truncated compressed rollout needs review instead of safe cleanup", (t) => {
+  const f = fixture(t);
+  const path = f.transcript(f.repo);
+  const filler = Array.from({ length: 20000 }, (_, i) => JSON.stringify({ type: "event_msg", payload: { message: `step ${i}` } })).join("\n");
+  writeFileSync(path, `${readFileSync(path, "utf8")}${filler}\n${JSON.stringify({ type: "event_msg", payload: { message: `inspect '${f.worktree}/file.ts'` } })}\n`);
+  const compressed = zstdCompressSync(readFileSync(path));
+  rmSync(path);
+  for (const cut of [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]) {
+    writeFileSync(`${path}.zst`, compressed.subarray(0, compressed.length - cut));
+    assert.equal(f.audit().bucket, "review-history", `cut ${cut}`);
+  }
+});
+
 test("an unreadable compressed rollout needs review instead of safe cleanup", (t) => {
   const f = fixture(t);
   const path = f.transcript(f.worktree);

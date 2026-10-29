@@ -2,10 +2,11 @@
 
 import { execFileSync } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { readdir, readlink, realpath, stat } from "node:fs/promises";
+import { readdir, readFile, readlink, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
-import { pipeline } from "node:stream";
+import { Readable } from "node:stream";
+import { StringDecoder } from "node:string_decoder";
 import { createZstdDecompress } from "node:zlib";
 
 async function canonical(path) {
@@ -46,10 +47,37 @@ async function* transcripts(directory) {
   }
 }
 
-// Codex compresses older rollouts to .jsonl.zst.
-function text(path) {
-  if (!path.endsWith(".zst")) return createReadStream(path, { encoding: "utf8" });
-  return pipeline(createReadStream(path), createZstdDecompress(), () => {}).setEncoding("utf8");
+// The content size a zstd frame header declares, or null when the header omits it.
+function declaredSize(frame) {
+  if (frame.readUInt32LE(0) !== 0xfd2fb528) throw new Error("a compressed rollout is not a zstd frame");
+  const descriptor = frame[4];
+  const single = (descriptor >> 5) & 1;
+  const sizeBytes = [single, 2, 4, 8][descriptor >> 6];
+  const offset = 5 + (single ? 0 : 1) + [0, 1, 2, 4][descriptor & 3];
+  if (sizeBytes === 0) return null;
+  if (sizeBytes === 1) return frame[offset];
+  if (sizeBytes === 2) return frame.readUInt16LE(offset) + 256;
+  return sizeBytes === 4 ? frame.readUInt32LE(offset) : Number(frame.readBigUInt64LE(offset));
+}
+
+// Codex compresses older rollouts to .jsonl.zst. Node's zstd decoder accepts a truncated
+// frame silently, so a compressed rollout counts only when it decodes to its declared size.
+async function* text(path) {
+  if (!path.endsWith(".zst")) {
+    yield* createReadStream(path, { encoding: "utf8" });
+    return;
+  }
+  const frame = await readFile(path);
+  const size = declaredSize(frame);
+  if (size === null) throw new Error("a compressed rollout does not declare its size");
+  const decoder = new StringDecoder("utf8");
+  let decoded = 0;
+  for await (const chunk of Readable.from([frame]).pipe(createZstdDecompress())) {
+    decoded += chunk.length;
+    yield decoder.write(chunk);
+  }
+  if (decoded !== size) throw new Error("a compressed rollout is incomplete");
+  yield decoder.end();
 }
 
 async function firstRecord(path) {
