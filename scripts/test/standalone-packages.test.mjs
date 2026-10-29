@@ -188,3 +188,12 @@ test('each runtime names its host isolation, authoring and review tools', () => 
     assert.ok(existsSync(join(root, 'harness/pstack/codex/skills/poteto-mode/references/bugbot-triage.md')));
   }
 });
+
+test('packages ship the cross-provider seat and teach setup to offer it', () => {
+  for (const host of ['claude-code', 'codex']) {
+    const dir = join(root, 'harness/pstack', host);
+    assert.ok(existsSync(join(dir, 'skills/poteto-mode/scripts/cross-provider.mjs')), host);
+    assert.match(readFileSync(join(dir, 'docs/runtime.md'), 'utf8'), /<provider>:<model> <effort>[\s\S]*cross-provider\.mjs[\s\S]*never replaced by the parent's model/);
+    assert.match(readFileSync(join(dir, 'skills/setup-pstack/SKILL.md'), 'utf8'), /detect seats on other providers/);
+  }
+});

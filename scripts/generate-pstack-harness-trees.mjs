@@ -20,13 +20,13 @@ const TARGETS = [
     tree: "claude-code",
     harness: "Claude Code",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    manifestFields: { version: "0.15.36-claude.9", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { version: "0.15.36-claude.10", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
   },
   {
     tree: "codex",
     harness: "Codex",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/", version: "0.15.36-codex.8", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.9", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
     userInvoked: CODEX_POLICY,
   },
 ];

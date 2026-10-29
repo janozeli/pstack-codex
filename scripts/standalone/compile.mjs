@@ -35,7 +35,7 @@ export function compileMarkdown(path, input, host, skillNames, emit) {
   if (path === 'skills/setup-pstack/SKILL.md') {
     section('### 1. Detect available models', '### 2.', `### 1. Detect available models
 
-Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields.`);
+Enumerate models and efforts accepted by the live dispatch tool. Use only confirmed available choices. Inherited aliases are allowed, but explicit efforts must also be supported. Read docs/runtime.md for the native configuration location and dispatch fields. Then detect seats on other providers: run \`--version\` for each of \`codex\`, \`claude\` and \`grok\` other than this host, and offer each one that answers as \`<provider>:<model> <effort>\` choices for panel roles and the arena cross-judge pool, so panels keep a family other than the parent's. In T3, the providers \`orchestrator_capabilities\` lists are the preferred route.`);
     section('### 2. Load current state', '### 3.', `### 2. Load current state
 
 Load the native model configuration. ${codex ? 'Read only the pstack models block in AGENTS.md; unrelated instructions are not role entries.' : 'Read the dedicated pstack-models.md rule file.'} Missing roles use the defaults below. Preserve customized model choices and panel lengths. Drop retired role labels only from this configuration and show them before confirmation.`);
