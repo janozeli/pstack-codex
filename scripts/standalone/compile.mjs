@@ -1,5 +1,5 @@
 import { rewriter } from './edits.mjs';
-import { runtime } from './runtime.mjs';
+import { coordinator, runtime } from './runtime.mjs';
 
 export function compileMarkdown(path, input, host, skillNames, emit) {
   const edit = rewriter(emit);
@@ -10,6 +10,11 @@ export function compileMarkdown(path, input, host, skillNames, emit) {
   const skillsDir = codex ? '.agents/skills/' : '.claude/skills/';
   const root = '../'.repeat(path.split('/').length - 1);
   let text = input;
+  // Cursor's Custom Mode keeps poteto-mode on every turn; each host has its own way to start a session in that mode.
+  const mode = codex ? 'the `codex -p poteto` profile' : '`claude --agent pstack:poteto-mode`';
+  const modeSetup = codex
+    ? 'To keep poteto-mode on for the whole session, the counterpart of the author\'s Custom Mode, save this profile as `$CODEX_HOME/poteto.config.toml` (default `~/.codex/poteto.config.toml`) and start Codex with `codex -p poteto`:\n\n```toml\ndeveloper_instructions = """\nKeep pstack\'s poteto-mode on for this whole session. Before your first reply on each new task, and again after any context compaction, read the installed poteto-mode skill in full and follow it: the newest $CODEX_HOME/plugins/cache/*/pstack/*/skills/poteto-mode/SKILL.md, with CODEX_HOME defaulting to ~/.codex. A casual turn that asks for no work needs no playbook.\n"""\n```\n\nOtherwise invoke `$pstack:poteto-mode` again for each new task.'
+    : 'To keep poteto-mode on for the whole session, the counterpart of the author\'s Custom Mode, start Claude Code with `claude --agent pstack:poteto-mode`. That coordinator reads the skill for each new task and after compaction. Otherwise invoke `/pstack:poteto-mode` again for each new task.';
   const section = (start, end, body) => {
     const a = text.indexOf(start), b = text.indexOf(end, a + start.length);
     if (a < 0 || b < 0) throw new Error(`${path}: source section changed: ${start}`);
@@ -49,7 +54,7 @@ ${codex ? 'In $CODEX_HOME/AGENTS.md (default ~/.codex/AGENTS.md), replace only t
 ${rows}
 \`\`\``);
   }
-  if (path === 'skills/poteto-help/SKILL.md') section('Whether `/poteto-mode` stays on', '## Pick a skill', 'Invoke the skill for each new task and continue with normal follow-ups. Do not assume a persistent mode UI. A new task asks the coordinator to select a fresh playbook. Children receive the complete brief and installed agent instructions.');
+  if (path === 'skills/poteto-help/SKILL.md') section('Whether `/poteto-mode` stays on', '## Pick a skill', `Whether poteto-mode stays on depends on how the user starts it. Invoking it with a task loads the skill for that task, and it can fade as the chat moves on. ${modeSetup} A new task asks the coordinator to select a fresh playbook. Children receive the complete brief and installed agent instructions.`);
   if (path === 'skills/arena/SKILL.md') {
     section('3. Pick the runners.', '4. Give each candidate', '3. Pick the runners from the arena runners role, preserving its list length. The default is one judgment model and one inherited code model at xhigh, resolved through docs/runtime.md. Parse model and effort separately. If a configured seat cannot run, report it and use an authorized same-family fallback; if none exists, drop it and report the gap. Preserve the source minimum of two runners, or one for a one-entry configuration, by using an available remaining model or inherited model when permitted. Report reduced diversity. Use the same model repeatedly for generation-bound work. Each candidate receives the same task and its own output location.');
     section('After all Phase B candidates complete,', '## Phase D:', 'After all Phase B candidates complete, choose one available model from the arena cross-judge pool that is provably outside the parent’s provider family. Inherited aliases, including aliases with explicit effort, cannot cross-judge. Try the authorized pool in order, with supported effort fallback. If no different-family judge can run, or the parent family is unknown, report the limitation and use the coordinator-only verdict in Phase D. The judge receives the rubric and candidates by path label, scores each criterion, and recommends a base with rationale. Run it only after candidates finish writing.');
@@ -73,7 +78,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
     [/^pstack ships this as a dormant \[automation pack\].*$/m, 'Configure scheduled triage and reproduction only through a verified host automation service. Each stage must pass evidence and may stop the pipeline. If no persistent service exists, this setup remains blocked.'],
     [/^- Drag related chats into the Project,.*$/m, '- Pass relevant prior reports and evidence explicitly to each coordinator and worker; do not assume shared conversation history.'],
     [/^The defaults run at `xhigh` reasoning,.*$/m, 'The default budget requests xhigh. Each configured model or inherited alias uses the highest supported effort at or below the requested budget; unsupported roles need a choice. The native setup records effective settings.'],
-    [/^From here you can type normal follow-ups\..*$/m, 'Continue with normal follow-ups. Invoke the skill again for each new task; do not assume a persistent mode UI.'],
+    [/^From here you can type normal follow-ups\..*$/m, `Continue with normal follow-ups. ${modeSetup}`],
     [/^If you run several agents against one repository on one computer,.*$/m, 'Give independent writers separate worktrees through the host isolation tool. Worktrees share the machine: allocate ports and outputs separately. A lane requiring a separate machine stays blocked until the host supplies one.'],
     [/^A \[Cursor Project\].*$/m, 'Use a persistent coordinator thread and supported worker isolation for a standing project. Record program state in notes.md or host project state tools. Work continues after the session ends only when the host provides a persistent execution service.'],
     [/^- `\/loop` is Cursor.*$/m, '- Persistent monitoring uses the host watcher or scheduler. Without one, only the current round can run.'],
@@ -101,9 +106,9 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /docs\/harness\/(?:codex|claude-code)\.md/g, 'docs/runtime.md');
   if (path === 'skills/poteto-mode/SKILL.md') section('**Match the model to the job.**', "You own every subagent's work.", '**Match the model to the job.** Start from the configured role and effort. Raise effort one supported step for the hardest work, lower it for routine work, and preserve the requested provider family. Verification keeps the swarm workers role. Split model from effort before dispatch. Use speed controls only if the live schema supports them and urgency warrants them. Never append a speed suffix to a native model ID. Follow the supported-effort fallback in docs/runtime.md; report unavailable models, overrides, and any reduced diversity instead of inventing IDs.');
   text = edit.replace(text, /\*\*Do not use readonly\/Ask mode\.\*\* It strips MCP access, which disables the MCP-backed investigators and the synthesizer's citation spot-checks\./g, 'Keep the tools needed for MCP-backed investigation and citation checks; instruct investigators not to edit.');
-  text = edit.replace(text, /, and mention once that a Custom Mode keeps it on\./g, '.');
-  text = edit.replace(text, /^Short works because the playbook holds the structure,.*$/m, 'The playbook holds the task structure. Invoke the skill for each new task and use normal follow-ups to steer the current one.');
-  text = edit.replace(text, /It was started with Enter\. Start it as a Custom Mode, or start each task with/g, 'Invoke the skill for each new task with');
+  text = edit.replace(text, /, and mention once that a Custom Mode keeps it on\./g, `, and mention once that ${mode} keeps it on.`);
+  text = edit.replace(text, /^Short works because the playbook holds the structure,.*$/m, `Short works because the playbook holds the structure, and ${mode} keeps poteto-mode in context on every turn. Your words carry the intent, and the skill carries the rigor.`);
+  text = edit.replace(text, /It was started with Enter\. Start it as a Custom Mode, or start each task with/g, `Start the session with ${mode}, or start each task with`);
   text = edit.replace(text, /With no path, before any other work, search [\s\S]*?If no such file exists, stop and tell your parent\./g, 'With no parent-supplied path, resolve skills/poteto-mode/SKILL.md from the parent of this installed agents/ directory. If that path cannot be established, stop and tell the parent.');
   text = edit.replace(text, /^is_background:.*\n/m, '');
   text = edit.replace(text, /https:\/\/github\.com\/cursor\/plugins/g, `https://github.com/janozeli/pstack-port`);
@@ -161,7 +166,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   if (unresolved.test(text)) throw new Error(`${path}: unresolved host dependency in ${host} output`);
   return text;
 }
-export { runtime };
+export { coordinator, runtime };
 
 export function compileAudit(input, host, emit) {
   const edit = rewriter(emit);

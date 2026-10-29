@@ -90,7 +90,7 @@ continue
 keep going until done
 ```
 
-The playbook holds the task structure. Invoke the skill for each new task and use normal follow-ups to steer the current one.
+Short works because the playbook holds the structure, and the `codex -p poteto` profile keeps poteto-mode in context on every turn. Your words carry the intent, and the skill carries the rigor.
 
 ## Switch tasks with "new task"
 

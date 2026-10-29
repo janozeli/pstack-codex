@@ -3,7 +3,7 @@
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compileMarkdown, compileAudit, compilePlanChecker, runtime } from "./standalone/compile.mjs";
+import { compileMarkdown, compileAudit, compilePlanChecker, coordinator, runtime } from "./standalone/compile.mjs";
 
 import { rewriter } from "./standalone/edits.mjs";
 
@@ -20,13 +20,13 @@ const TARGETS = [
     tree: "claude-code",
     harness: "Claude Code",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    manifestFields: { version: "0.15.36-claude.5", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { version: "0.15.36-claude.6", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
   },
   {
     tree: "codex",
     harness: "Codex",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/", version: "0.15.36-codex.4", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.5", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
     userInvoked: CODEX_POLICY,
   },
 ];
@@ -95,12 +95,13 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
   }
   const audit = files.get("skills/poteto-mode/scripts/worktree-audit.sh");
   audit.bytes = Buffer.from(compileAudit(audit.bytes.toString("utf8"), harness, trace("skills/poteto-mode/scripts/worktree-audit.sh")));
-  files.set("docs/runtime.md", { bytes: Buffer.from(runtime(harness)), executable: false });
   for (const [path, entry] of files) {
-    if (path.endsWith(".md") && path !== "docs/runtime.md") {
+    if (path.endsWith(".md")) {
       entry.bytes = Buffer.from(compileMarkdown(path, entry.bytes.toString("utf8"), harness, skills, trace(path)));
     }
   }
+  files.set("docs/runtime.md", { bytes: Buffer.from(runtime(harness)), executable: false });
+  if (harness !== "Codex") files.set("agents/poteto-mode.md", { bytes: Buffer.from(coordinator), executable: false });
   files.set("LICENSE", file(join(PSTACK, "LICENSE")));
   const manifest = file(join(PSTACK, "plugin.json"));
   if (manifestFields) {
