@@ -79,6 +79,10 @@ Read the endpoint from the created service. Use the host secret-request mechanis
     [/^- `\/loop` and `\/create-skill` are Cursor built-ins\.$/m, '- Monitoring and skill authoring use the bundled runtime procedures and available host tools.'],
   ];
   for (const [pattern, replacement] of paragraphs) text = text.replace(pattern, replacement);
+  if (codex && path === 'docs/guide/01-setup.md') {
+    text = text.replace(/^You only override what you care about\..*$/m,
+      "You only override what you care about. A missing role uses its default. To reset a role, remove only its line inside the pstack models block in AGENTS.md. To reset all roles, remove only the pstack models block between <!-- pstack models --> and <!-- /pstack models -->, then rerun /setup-pstack. Preserve AGENTS.md and all instructions outside that block. A rerun preserves customized choices still present in the block.");
+  }
   text = text.replace(/Cursor also exposes/g, 'the host exposes');
   text = text.replace(/Otherwise inspect the `mcps\/` directory Cursor exposes for enabled MCP servers\./g, 'Otherwise use the host tool-discovery mechanism for enabled MCP servers.');
   text = text.replace(/`cursor-team-kit` publishes `control-cli` \(CLIs and TUIs\) and `control-ui` \(browser \/ Electron \/ web UIs\)\./g, 'Drive CLIs through the actual shell or PTY and UIs through a permitted interactive driver, as specified in docs/runtime.md.');

@@ -64,3 +64,10 @@ test('the compiler rejects a new unmapped source host dependency', async () => {
     assert.throws(() => compileMarkdown('skills/example/SKILL.md','# Example\n\nRead `.cursor/new-service/state` before acting.\n',host,['example']), /unresolved host dependency/);
   }
 });
+
+test('Codex reset instructions preserve the shared AGENTS.md file', () => {
+  const guide = readFileSync(join(root,'harness/pstack/codex/docs/guide/01-setup.md'),'utf8');
+  assert.doesNotMatch(guide, /delete the file/);
+  assert.match(guide, /remove only.*pstack models.*block/i);
+  assert.match(guide, /Preserve.*outside.*block/i);
+});
