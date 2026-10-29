@@ -24,15 +24,15 @@ Each reviewer and the synthesizer name a role line in the `$CODEX_HOME/AGENTS.md
 
 | Lens | Role line | Default `model` | Prompt template |
 |---|---|---|---|
-| Judgment | `reflect judgment, divergent, synthesizer` | `inherit-parent xhigh` | `references/judgment-reviewer.md` |
-| Tooling | `reflect tooling` | `inherit-parent xhigh` | `references/tooling-reviewer.md` |
-| Divergent | `reflect judgment, divergent, synthesizer` | `inherit-parent xhigh` | `references/divergent-reviewer.md` |
+| Judgment | `reflect judgment, divergent, synthesizer` | `gpt-6-astra xhigh` | `references/judgment-reviewer.md` |
+| Tooling | `reflect tooling` | `gpt-6.1-sol xhigh` | `references/tooling-reviewer.md` |
+| Divergent | `reflect judgment, divergent, synthesizer` | `gpt-6-astra xhigh` | `references/divergent-reviewer.md` |
 
 Pass each template verbatim, substituting the transcript path or digest where marked. Reviewers return findings in the `spawn_agent` response body.
 
 ## 3. Synthesize
 
-One `spawn_agent` call, a native worker with a complete message, `model` from the `reflect judgment, divergent, synthesizer` line (default `inherit-parent xhigh`), agent mode (tools sufficient for the task). It spot-verifies citations through MCP, and tool restrictions can remove required integrations. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
+One `spawn_agent` call, a native worker with a complete message, `model` from the `reflect judgment, divergent, synthesizer` line (default `gpt-6-astra xhigh`), agent mode (tools sufficient for the task). It spot-verifies citations through MCP, and tool restrictions can remove required integrations. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
 
 ## 4. Structural enforcement check
 

@@ -35,7 +35,7 @@ Claude Code 2.1.292 or later is required for per-invocation subagent effort. Use
 
 ## How it works
 
-`poteto-mode` selects the original playbook and coordinates its investigation, implementation, review, and proof steps. `setup-pstack` keeps the original role list and budget choices. It maps supported model defaults to the host's aliases and unsupported providers to the parent model with an explicit effort; it does not introduce a new model catalog.
+`poteto-mode` selects the original playbook and coordinates its investigation, implementation, review, and proof steps. `setup-pstack` keeps the original role list and budget choices. It keeps the author's two model roles on each host's own models: her Opus roles (judgment, prose, hardest tasks) on `opus` or `gpt-6-astra`, and her Grok roles (code delegates, investigators, second panel seats) on `haiku` or `gpt-6.1-sol`. Setup marks any default the account does not offer as needing a choice, and can add a seat from another provider's CLI for the arena judge.
 
 Each package also bundles the `deslop`, `control-cli` and `control-ui` skills that pstack calls, from this repository's MIT-licensed `cursor-team-kit`, with their license.
 

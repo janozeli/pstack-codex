@@ -13,7 +13,7 @@ const root = resolve(here, '../..');
 const lean = process.env.LEAN ?? 'lean';
 const proof = ['Port.lean', 'Translation.lean'].map(file => readFileSync(join(here, file), 'utf8').replace(/^import Std\n/, '')).join('\n');
 const required = [
-  ...['effort_preserved', 'codex_inherits', 'claude_opus_preserved', 'fast_does_not_change_model',
+  ...['effort_preserved', 'claude_opus_preserved', 'claude_grok_is_haiku', 'codex_opus_is_astra', 'codex_grok_is_sol', 'fast_does_not_change_model',
     'role_names_and_order_preserved', 'panel_sizes_preserved', 'panel_efforts_and_order_preserved', 'model_rule_present', 'Aligned.length_eq', 'checkList_sound', 'checkList_complete', 'checkRoles_sound', 'checkRoles_count'].map(n => `Port.${n}`),
   ...['frame_sound', 'frame_accounting', 'accepted_step_decomposition', 'frame_refines', 'frame_reverse',
     'allowed_contract', 'accepted_step_contract', 'checkStep_sound', 'checkTrace_sound', 'pipeline_refines', 'frame_identity', 'pipeline_identity',
@@ -96,7 +96,7 @@ try {
   };
   // Exercise the actual executable, including JSON decoding and file boundary.
   const fixture = { sourceRoles: [{ name: 'worker', seats: ['grok-4.7-high'] }],
-    nativeRoles: [{ name: 'worker', seats: ['inherit-parent high'] }], tree: 'codex', skills: ['reflect'], traces: [{ path: 'example.md', ...trace }],
+    nativeRoles: [{ name: 'worker', seats: ['gpt-6.1-sol high'] }], tree: 'codex', skills: ['reflect'], traces: [{ path: 'example.md', ...trace }],
     expected: [e], actual: [e], produced: [e] };
   run([fixture], 'RunnerPositive');
   for (const [label, changed] of [
@@ -106,13 +106,13 @@ try {
     ['ChangedBytes', { ...fixture, actual: [{ ...e, content: 2 }] }],
     ['LostContext', { ...fixture, traces: [{ path: 'example.md', ...trace, output: 'new suffix' }] }],
     ['MissingTrace', { ...fixture, traces: [] }],
-    ['ChangedRole', { ...fixture, nativeRoles: [{ name: 'other', seats: ['inherit-parent high'] }] }],
-    ['ChangedPanel', { ...fixture, nativeRoles: [{ name: 'worker', seats: ['inherit-parent high','inherit-parent high'] }] }],
+    ['ChangedRole', { ...fixture, nativeRoles: [{ name: 'other', seats: ['gpt-6.1-sol high'] }] }],
+    ['ChangedPanel', { ...fixture, nativeRoles: [{ name: 'worker', seats: ['gpt-6.1-sol high','gpt-6.1-sol high'] }] }],
     ['MissingRoles', { ...fixture, nativeRoles: [] }],
     ['UnknownHost', { ...fixture, tree: 'unknown' }],
   ]) assert.throws(() => run([changed], label), /rejected|Empty artifact coverage|Unknown host/);
-  const badModel = { input: 'grok-4.7-high', output: 'inherit-parent low', steps: [{
-    chunks: [{ keep: '', before: 'grok-4.7-high', after: 'inherit-parent low' }], tail: '', output: 'inherit-parent low',
+  const badModel = { input: 'grok-4.7-high', output: 'gpt-6.1-sol low', steps: [{
+    chunks: [{ keep: '', before: 'grok-4.7-high', after: 'gpt-6.1-sol low' }], tail: '', output: 'gpt-6.1-sol low',
   }] };
   assert.throws(() => run([{ ...fixture, traces: [{ path: 'model.md', ...badModel }] }], 'WrongModel'), /rewrite trace rejected/);
   const badCommand = { input: '/reflect', output: '/pstack:reflect', steps: [{

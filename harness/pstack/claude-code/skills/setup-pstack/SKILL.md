@@ -42,23 +42,23 @@ Write $CLAUDE_CONFIG_DIR/rules/pstack-models.md (default ~/.claude/rules/pstack-
 
 ```
 # budget: large (xhigh)
-feature, refactoring: inherit-parent xhigh
-bug-fix: inherit-parent xhigh
-perf-issue: inherit-parent xhigh
-hillclimb: inherit-parent xhigh
+feature, refactoring: haiku xhigh
+bug-fix: haiku xhigh
+perf-issue: haiku xhigh
+hillclimb: haiku xhigh
 judgment and prose: opus xhigh
 hardest tasks: opus xhigh
-how explorer: inherit-parent xhigh
+how explorer: haiku xhigh
 how explainer: opus xhigh
-why investigators: inherit-parent xhigh
+why investigators: haiku xhigh
 why synthesizer: opus xhigh
-reflect tooling: inherit-parent xhigh
+reflect tooling: haiku xhigh
 reflect judgment, divergent, synthesizer: opus xhigh
-arena runners: opus xhigh, inherit-parent xhigh
-arena cross-judge pool: opus xhigh, inherit-parent xhigh
-swarm workers: inherit-parent xhigh
-architect runners: opus xhigh, inherit-parent xhigh
-interrogate reviewers: opus xhigh, inherit-parent xhigh
+arena runners: opus xhigh, haiku xhigh
+arena cross-judge pool: opus xhigh, haiku xhigh
+swarm workers: haiku xhigh
+architect runners: opus xhigh, haiku xhigh
+interrogate reviewers: opus xhigh, haiku xhigh
 ```
 
 ### 6. Confirm
