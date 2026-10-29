@@ -20,13 +20,13 @@ const TARGETS = [
     tree: "claude-code",
     harness: "Claude Code",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    manifestFields: { version: "0.15.36-claude.6", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { version: "0.15.36-claude.7", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
   },
   {
     tree: "codex",
     harness: "Codex",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/", version: "0.15.36-codex.5", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.6", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
     userInvoked: CODEX_POLICY,
   },
 ];
@@ -51,12 +51,23 @@ function file(path) {
   return { bytes: readFileSync(path), executable: (statSync(path).mode & 0o111) !== 0 };
 }
 
-const skills = readdirSync(SKILLS).filter((name) => existsSync(join(SKILLS, name, "SKILL.md")));
+// Skills pstack depends on that ship in another plugin of this repository. They are host-neutral,
+// so each package bundles them with their license instead of rewriting their names away.
+const VENDORED = { root: "cursor-team-kit", skills: ["control-cli", "control-ui", "deslop"] };
+
+// The source file a package path comes from.
+function sourceFile(path) {
+  const vendored = path.match(/^skills\/([^/]+)\/(.+)$/);
+  if (!vendored || !VENDORED.skills.includes(vendored[1])) return join(PSTACK, path);
+  return vendored[2] === "LICENSE" ? join(ROOT, VENDORED.root, "LICENSE") : join(ROOT, VENDORED.root, path);
+}
+
+const skills = [...readdirSync(SKILLS).filter((name) => existsSync(join(SKILLS, name, "SKILL.md"))), ...VENDORED.skills].sort();
 
 const problems = [];
 const userInvoked = new Set();
 for (const skill of skills) {
-  const frontmatter = readFileSync(join(SKILLS, skill, "SKILL.md"), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+  const frontmatter = readFileSync(sourceFile(`skills/${skill}/SKILL.md`), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
   const name = frontmatter.match(/^name:(.*)$/m)?.[1].trim().replace(/^(["'])(.*)\1$/, "$2");
   if (/^disable-model-invocation:\s*true\s*$/m.test(frontmatter)) userInvoked.add(skill);
   if (name !== skill) problems.push(`skills/${skill}/SKILL.md has name ${JSON.stringify(name ?? "")}, not its folder name ${skill}`);
@@ -87,6 +98,10 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
     join(PSTACK, "README.md"),
   ];
   const files = new Map(copies.map((path) => [relative(PSTACK, path), file(path)]));
+  for (const skill of VENDORED.skills) {
+    for (const path of walk(join(ROOT, VENDORED.root, "skills", skill))) files.set(relative(join(ROOT, VENDORED.root), path), file(path));
+    files.set(`skills/${skill}/LICENSE`, file(sourceFile(`skills/${skill}/LICENSE`)));
+  }
   const nativeHistory = harness === "Codex" ? "codex" : "claude";
   files.delete(`skills/poteto-mode/scripts/${nativeHistory === "codex" ? "claude" : "codex"}-worktree-activity.mjs`);
   for (const name of ['check-plan.mjs', 'check-plan.test.ts']) {
@@ -124,7 +139,7 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
   return files;
 }
 
-export { render, TARGETS };
+export { render, sourceFile, TARGETS, VENDORED };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // Each harness installs only its tree, so a relative link that works from pstack/ has to work inside the tree too.

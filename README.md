@@ -37,6 +37,8 @@ Claude Code 2.1.292 or later is required for per-invocation subagent effort. Use
 
 `poteto-mode` selects the original playbook and coordinates its investigation, implementation, review, and proof steps. `setup-pstack` keeps the original role list and budget choices. It maps supported model defaults to the host's aliases and unsupported providers to the parent model with an explicit effort; it does not introduce a new model catalog.
 
+Each package also bundles the `deslop`, `control-cli` and `control-ui` skills that pstack calls, from this repository's MIT-licensed `cursor-team-kit`, with their license.
+
 Native host agents cannot supply every provider in the original panels. The native runtime contracts report reduced diversity and follow each skill's stated fallback. Features requiring Cursor cloud machines, Automations, or other unavailable capabilities remain incomplete unless a verified host equivalent satisfies them. A worktree is not a separate machine, and a draft placeholder does not count as successful verification.
 
 Each host has its own runtime contracts and guide: [Claude Code](harness/pstack/claude-code/docs/runtime.md) ([guide](harness/pstack/claude-code/docs/guide/README.md)) and [Codex](harness/pstack/codex/docs/runtime.md) ([guide](harness/pstack/codex/docs/guide/README.md)). The generator compiles shared source into native instructions before installation; the packages do not read a translation adapter or require the source checkout.

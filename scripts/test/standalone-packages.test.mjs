@@ -42,7 +42,7 @@ for (const host of ["codex", "claude-code"]) {
   });
   test(`${host} has the original complete skill and playbook inventory`, () => {
     const names = dir => readdirSync(dir).filter(name => existsSync(join(dir,name,"SKILL.md"))).sort();
-    assert.deepEqual(names(join(root,"harness/pstack",host,"skills")), names(join(root,"pstack/skills")));
+    assert.deepEqual(names(join(root,"harness/pstack",host,"skills")), [...names(join(root,"pstack/skills")), "control-cli", "control-ui", "deslop"].sort());
     const source = readdirSync(join(root,"pstack/skills/poteto-mode/playbooks")).sort();
     assert.deepEqual(readdirSync(join(root,"harness/pstack",host,"skills/poteto-mode/playbooks")).sort(),source);
   });
@@ -142,5 +142,21 @@ test('each host documents a session that keeps poteto-mode on', () => {
   assert.match(codexSetup, /codex -p poteto/);
   for (const dir of [claude, codex]) {
     for (const file of walk(dir).filter(path => path.endsWith('.md'))) assert.doesNotMatch(readFileSync(file, 'utf8'), /persistent mode UI/, file);
+  }
+});
+
+test('packages bundle the control and cleanup skills pstack calls', () => {
+  for (const [host, invoke] of [['claude-code', '/pstack:'], ['codex', '$pstack:']]) {
+    const dir = join(root, 'harness/pstack', host);
+    for (const skill of ['control-cli', 'control-ui', 'deslop']) {
+      assert.equal(readFileSync(join(dir, 'skills', skill, 'SKILL.md'), 'utf8'), readFileSync(join(root, 'cursor-team-kit/skills', skill, 'SKILL.md'), 'utf8'), `${host} ${skill}`);
+      assert.match(readFileSync(join(dir, 'skills', skill, 'LICENSE'), 'utf8'), /MIT License[\s\S]*Copyright \(c\) 2026 Cursor/);
+    }
+    assert.ok(readFileSync(join(dir, 'skills/poteto-mode/SKILL.md'), 'utf8').includes(`${invoke}deslop`), host);
+    assert.ok(readFileSync(join(dir, 'skills/poteto-help/SKILL.md'), 'utf8').includes(`This package also bundles \`${invoke}deslop\``), host);
+    assert.doesNotMatch(readFileSync(join(dir, 'docs/guide/05-build-and-clean.md'), 'utf8'), /not in pstack/, host);
+    for (const file of walk(dir).filter(path => path.endsWith('.md'))) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /code cleanup procedure|(?:CLI|UI) verification procedure/, file);
+    }
   }
 });
