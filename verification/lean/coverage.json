@@ -3,7 +3,7 @@
   "sha256": {
     "scripts/standalone/compile.mjs": "8088d325fb2253deac84ec2d047fd76c43aee2123b8bd25a2d9591fc9a1e959a",
     "scripts/standalone/runtime.mjs": "9327661851845447ad75060427892b2af89b0e01547ffa9d788c07624c51ec43",
-    "scripts/generate-pstack-harness-trees.mjs": "6278af52f1d7801435318b082b2e60ab98c98bd3584e806827b247ff4e92cc5c",
+    "scripts/generate-pstack-harness-trees.mjs": "0dca4466ad75d2c2f57804cafe812980f87ad10730074115cd2856d7c145ebd2",
     "pstack/skills/setup-pstack/SKILL.md": "df8ad3638a4dca31fb4b43d58056f0299f23ad0530614166d55ef989062b41ec",
     "scripts/standalone/edits.mjs": "a0b74b373c6f92be7062c7bfe2b507143d893d3ab6d7c6a4dd78f29dedaff233"
   }

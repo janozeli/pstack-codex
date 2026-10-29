@@ -116,7 +116,7 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
       const target = resolve(path, href);
       if (!target || target.split("/")[0] === ".." || has(files, target)) return link;
       const kind = statSync(join(PSTACK, target)).isDirectory() ? "tree" : "blob";
-      return `](https://github.com/janozeli/pstack-${harness === "Codex" ? "codex" : "claude"}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
+      return `](https://github.com/janozeli/pstack-port/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
     });
     entry.bytes = Buffer.from(text);
   }
