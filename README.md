@@ -50,6 +50,6 @@ npm run typecheck:statechart
 
 See [Tests and CI](docs/testing.md) for all Bun suites, real TLC execution and isolated native installation checks. CI requires zero skipped statechart tests and verifies both hosts with pinned CLIs. Runtime tests do not execute every workflow with external models or services.
 
-[Lean verification](docs/lean-verification.md) checks selected port translation contracts in CI. Lean is verification tooling only and is excluded from installed pstack packages.
+[Lean verification](docs/lean-verification.md) checks complete rewrite traces and package inventories with a formally verified validator in CI. Lean is verification tooling only and is excluded from installed pstack packages.
 
 This port starts from `janozeli/pstack-codex` commit `d1c670b8d371200f4b15c2b2038818181e9a6c41`. The original author credit and [MIT license](pstack/LICENSE) are retained. Port releases use a `-codex.N` version suffix to distinguish them from upstream releases.

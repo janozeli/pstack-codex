@@ -45,7 +45,7 @@ Use `--cli /absolute/path/to/binary` if a version-manager shim depends on the or
 
 ## Port proofs with Lean
 
-Lean verifies selected port translation contracts from repository-only files in `verification/lean/`. It is excluded from skills and generated packages. See [Lean verification of the port](lean-verification.md) for the exact proof boundary, compiler correspondence, pinned installation and `npm run verify:lean`. The separate `port-proofs` CI job requires all proofs and negative controls to pass; missing Lean cannot produce a skip.
+Lean proves the soundness of a translation validator and executes it on complete rewrite traces and package inventories, from repository-only files in `verification/lean/`. It is excluded from skills and generated packages. See [Lean verification of the port](lean-verification.md) for the exact proof boundary, compiler correspondence, pinned installation and `npm run verify:lean`. The separate `port-proofs` CI job requires all proofs and negative controls to pass; missing Lean cannot produce a skip.
 
 ## CI coverage
 

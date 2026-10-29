@@ -85,4 +85,82 @@ def render (model : NativeModel) : String :=
 def invocation (host : Host) (skill : String) : String :=
   (match host with | .codex => "$pstack:" | .claude => "/pstack:") ++ skill
 
+def sourceRender (model : SourceModel) : String :=
+  (match model.family with | .opus => "claude-opus-5-5" | .grok => "grok-4.7") ++
+    "-" ++ effortText model.effort ++ (if model.fast then "-fast" else "")
+
+-- This is the finite lexical grammar, not a finite set of test documents.
+-- The verified trace checker applies it to every actual replacement in every
+-- document, while its soundness theorem quantifies over arbitrary traces.
+def syntaxRules (host : Host) (skills : List String) : List (String × String) :=
+  let models := [Family.opus, Family.grok].flatMap fun family =>
+    [Effort.low, .medium, .high, .xhigh, .max].flatMap fun effort =>
+      [false, true].map fun fast =>
+        let model : SourceModel := ⟨family, effort, fast⟩
+        (sourceRender model, render (translate host model))
+  models ++ skills.map (fun skill => ("/" ++ skill, invocation host skill))
+
+theorem model_rule_present (host : Host) (model : SourceModel) (skills : List String) :
+    (syntaxRules host skills).lookup (sourceRender model) = some (render (translate host model)) := by
+  rcases model with ⟨family, effort, fast⟩
+  cases host <;> cases family <;> cases effort <;> cases fast <;>
+    rfl
+
+inductive Aligned (relation : α → β → Prop) : List α → List β → Prop where
+  | nil : Aligned relation [] []
+  | cons {a as b bs} : relation a b → Aligned relation as bs → Aligned relation (a :: as) (b :: bs)
+
+theorem Aligned.length_eq {relation : α → β → Prop} {as : List α} {bs : List β}
+    (h : Aligned relation as bs) : as.length = bs.length := by
+  induction h with
+  | nil => rfl
+  | cons _ _ ih => simp [ih]
+
+def checkList (relation : α → β → Bool) : List α → List β → Bool
+  | [], [] => true
+  | a :: as, b :: bs => relation a b && checkList relation as bs
+  | _, _ => false
+
+theorem checkList_sound (relation : α → β → Bool) (as : List α) (bs : List β)
+    (h : checkList relation as bs = true) : Aligned (fun a b => relation a b = true) as bs := by
+  induction as generalizing bs with
+  | nil =>
+    cases bs with
+    | nil => exact .nil
+    | cons b bs => simp [checkList] at h
+  | cons a as ih =>
+    cases bs with
+    | nil => simp [checkList] at h
+    | cons b bs =>
+      simp only [checkList, Bool.and_eq_true] at h
+      exact .cons h.1 (ih bs h.2)
+
+theorem checkList_complete (relation : α → β → Bool) (as : List α) (bs : List β)
+    (h : Aligned (fun a b => relation a b = true) as bs) : checkList relation as bs = true := by
+  induction h with
+  | nil => rfl
+  | cons hr _ ih => simp [checkList, hr, ih]
+
+def checkRoles (rules : List (String × String)) (source native : List (Role String)) : Bool :=
+  checkList (fun a b => a.name == b.name &&
+    checkList (fun x y => rules.lookup x == some y) a.seats b.seats) source native
+
+theorem checkRoles_sound (rules : List (String × String)) (source native : List (Role String))
+    (h : checkRoles rules source native = true) :
+    Aligned (fun a b => a.name = b.name ∧
+      Aligned (fun x y => rules.lookup x = some y) a.seats b.seats) source native := by
+  have aligned := checkList_sound _ source native h
+  clear h
+  induction aligned with
+  | nil => exact .nil
+  | cons hr _ ih =>
+    simp only [Bool.and_eq_true, beq_iff_eq] at hr
+    constructor
+    · exact ⟨hr.1, by simpa only [beq_iff_eq] using checkList_sound _ _ _ hr.2⟩
+    · exact ih
+
+theorem checkRoles_count (rules : List (String × String)) (source native : List (Role String))
+    (h : checkRoles rules source native = true) : source.length = native.length :=
+  (checkRoles_sound rules source native h).length_eq
+
 end Port
