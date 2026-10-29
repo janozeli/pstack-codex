@@ -28,9 +28,9 @@ Remaining triggers:
 - Nontrivial multi-step → write the throughput checkpoint (Feature step 3).
 - Any prose surface, your reply to the user included → the **unslop** skill. Write the reply per **Writing the reply**. Agent-facing prose also follows the skill-authoring procedure in docs/runtime.md.
 - Docs, RFCs, readmes, PR descriptions, or commit messages → the **technical-writing** skill (`/pstack:technical-writing`).
-- Before commit → the `code cleanup procedure` skill using the capability procedures in docs/runtime.md (`code cleanup procedure`).
+- Before commit → the `deslop` skill bundled with this package (`/pstack:deslop`).
 - Before review → the **no-comments** skill (`/pstack:no-comments`).
-- Shipping UI / IDE / CLI → the matching control skill. Drive CLIs through the actual shell or PTY and UIs through a permitted interactive driver, as specified in docs/runtime.md. For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
+- Shipping UI / IDE / CLI → the matching control skill. This package bundles `control-cli` (CLIs and TUIs) and `control-ui` (browser / Electron / web UIs). For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
 - Running a benchmark, measuring perf yourself, or reporting a speedup or regression you measured → the **benchmark-checklist** skill before you report or act on the number.
 - Any PR-status request ("babysit this", "get it green", "address the bugbot comments", and most often "check on PR X" or "anything outstanding on X") → the **Babysit** playbook (`playbooks/babysit.md`), using the bundled playbook. Never triggered by merely opening a PR. Declare its mode before polling. The playbook's step 1 owns the request-to-mode mapping. Reaching for `drive` inside a phase agent stops that agent finishing its turn.
 - Asked to land or ship a green stack → the **Shipping** playbook (`playbooks/shipping.md`). Green is not safe. Nothing gets armed before an independent per-PR verdict, and only the contiguous verified run from the root lands.

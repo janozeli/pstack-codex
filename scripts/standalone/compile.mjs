@@ -91,7 +91,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   }
   text = edit.replace(text, /Cursor also exposes/g, 'the host exposes');
   text = edit.replace(text, /Otherwise inspect the `mcps\/` directory Cursor exposes for enabled MCP servers\./g, 'Otherwise use the host tool-discovery mechanism for enabled MCP servers.');
-  text = edit.replace(text, /`cursor-team-kit` publishes `control-cli` \(CLIs and TUIs\) and `control-ui` \(browser \/ Electron \/ web UIs\)\./g, 'Drive CLIs through the actual shell or PTY and UIs through a permitted interactive driver, as specified in docs/runtime.md.');
+  text = edit.replace(text, /`cursor-team-kit` publishes `control-cli` \(CLIs and TUIs\) and `control-ui` \(browser \/ Electron \/ web UIs\)\./g, 'This package bundles `control-cli` (CLIs and TUIs) and `control-ui` (browser / Electron / web UIs).');
   text = edit.replace(text, /, not Cursor's built-in babysit skill, whose description matches the same words/g, ', using the bundled playbook');
   text = edit.replace(text, /This playbook replaces Cursor's built-in babysit skill for these requests, so do not route there even though its description matches the same words\./g, 'Use this bundled playbook for these requests.');
   text = edit.replace(text, /Cursor's own skill for the same job/g, 'a different installed skill');
@@ -138,14 +138,11 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /\bclaude-opus-5-5-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `${codex ? 'inherit-parent' : 'opus'} ${effort}`);
   text = edit.replace(text, /\bgrok-4\.7-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `inherit-parent ${effort}`);
   text = edit.replace(text, /Cursor's built-in `create-skill`(?: skill)?|the \*\*create-skill\*\* skill \(Cursor's built-in for authoring SKILL.md files\)/g, 'the skill-authoring procedure in docs/runtime.md');
-  text = edit.replace(text, /(?:from|in) (?:the )?`cursor-team-kit`(?: plugin)?/g, 'using the capability procedures in docs/runtime.md');
+  text = edit.replace(text, /(?:from|in) (?:the )?`cursor-team-kit`(?: plugin)?/g, 'bundled with this package');
   text = edit.replace(text, /Cursor's `\/loop` command(?: \(a built-in, not a pstack skill\))?/g, 'the host-supported persistent watcher');
   text = edit.replace(text, /Cursor cloud agent/g, 'isolated worker');
   text = edit.replace(text, /\bCursor environment\b/g, `${host} environment`);
   text = edit.replace(text, /\/?create-skill/g, 'skill-authoring procedure');
-  text = edit.replace(text, /\/?deslop/g, 'code cleanup procedure');
-  text = edit.replace(text, /control-cli/g, 'CLI verification procedure');
-  text = edit.replace(text, /control-ui/g, 'UI verification procedure');
   text = edit.replace(text, /\/loop/g, 'persistent monitoring');
   for (const skill of skillNames) {
     text = edit.replace(text, new RegExp('(?<![\\w/:])/'+skill+'(?![\\w/-])','g'), invoke+skill);

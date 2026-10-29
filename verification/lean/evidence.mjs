@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { render, TARGETS } from '../../scripts/generate-pstack-harness-trees.mjs';
+import { render, sourceFile, TARGETS, VENDORED } from '../../scripts/generate-pstack-harness-trees.mjs';
 import { coordinator, runtime } from '../../scripts/standalone/runtime.mjs';
 
 export function walk(root, dir = '', sourceExclusions = true) {
@@ -34,8 +34,9 @@ export function collect(root) {
     return contents.get(key);
   };
   const source = join(root, 'pstack');
-  const skills = readdirSync(join(source, 'skills')).sort();
-  const sourcePaths = [...walk(source, 'skills'), ...walk(source, 'agents'), ...walk(source, 'docs/guide'), 'README.md', 'LICENSE'];
+  const skills = [...readdirSync(join(source, 'skills')), ...VENDORED.skills].sort();
+  const vendored = VENDORED.skills.flatMap(skill => [...walk(join(root, VENDORED.root), `skills/${skill}`), `skills/${skill}/LICENSE`]);
+  const sourcePaths = [...walk(source, 'skills'), ...vendored, ...walk(source, 'agents'), ...walk(source, 'docs/guide'), 'README.md', 'LICENSE'].sort();
   const text = bytes => {
     const value = bytes.toString('utf8');
     assert.ok(Buffer.from(value).equals(bytes), 'Invalid UTF-8 cannot be reflected as a Lean String');
@@ -57,14 +58,14 @@ export function collect(root) {
     // not from renderer output. An omitted or invented renderer entry must fail.
     const paths = sourcePaths.filter(p => p !== omitted);
     const expected = paths.map(path => {
-      const original = readFileSync(join(source, path));
+      const original = readFileSync(sourceFile(path));
       const steps = traces.get(path) ?? [];
       let output = original;
       if (steps.length) {
         assert.equal(steps[0].input, text(original), `${path}: trace does not start at the actual source`);
         output = Buffer.from(steps.at(-1).output);
       }
-      return entry(path, output, (statSync(join(source, path)).mode & 0o111) !== 0);
+      return entry(path, output, (statSync(sourceFile(path)).mode & 0o111) !== 0);
     });
     expected.push(entry('docs/runtime.md', Buffer.from(runtime(target.harness)), false));
     if (target.tree !== 'codex') expected.push(entry('agents/poteto-mode.md', Buffer.from(coordinator), false));
@@ -72,7 +73,7 @@ export function collect(root) {
     for (const path of (target.tree === 'codex' ? ['.codex-plugin/plugin.json'] : ['plugin.json', '.claude-plugin/plugin.json']))
       expected.push(entry(path, Buffer.from(JSON.stringify(manifest, null, 2) + '\n'), false));
     if (target.tree === 'codex') for (const skill of skills) {
-      const frontmatter = text(readFileSync(join(source, 'skills', skill, 'SKILL.md'))).match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+      const frontmatter = text(readFileSync(sourceFile(`skills/${skill}/SKILL.md`))).match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
       if (/^disable-model-invocation:\s*true\s*$/m.test(frontmatter))
         expected.push(entry(`skills/${skill}/agents/openai.yaml`, Buffer.from('policy:\n  allow_implicit_invocation: false\n'), false));
     }
@@ -82,7 +83,7 @@ export function collect(root) {
     // runtime/manifests/policies have separate, explicit construction contracts.
     for (const path of traces.keys()) assert.ok(paths.includes(path), `Unaccounted trace ${path}`);
     return { host: target.harness, tree: target.tree, traces: [...traces].map(([path, steps]) => ({
-      path, input: text(readFileSync(join(source, path))),
+      path, input: text(readFileSync(sourceFile(path))),
       output: text(readFileSync(join(root, 'harness/pstack', target.tree, path))), steps,
     })), expected: expected.sort((a,b) => a.path-b.path), actual: actual.sort((a,b) => a.path-b.path),
     produced: produced.sort((a,b) => a.path-b.path), skills,

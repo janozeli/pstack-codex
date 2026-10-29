@@ -115,7 +115,7 @@ Close calls:
 
 Not in pstack:
 
-- `code cleanup procedure`, `CLI verification procedure`, and `UI verification procedure` ship using the capability procedures in docs/runtime.md.
+- `$pstack:deslop`, `control-cli`, and `control-ui` ship bundled with this package.
 - Monitoring and skill authoring use the bundled runtime procedures and available host tools.
 - pstack has no `/orchestrate` skill. Orchestrate is a `$pstack:poteto-mode` playbook. If the slash menu shows `/orchestrate`, another plugin provides it.
 
