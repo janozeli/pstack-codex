@@ -217,3 +217,22 @@ test("pstack requires its Codex manifest even when a Claude manifest exists", (t
   assert.equal(result.status, 1);
   assert.match(result.stderr, /missing \.codex-plugin\/plugin\.json/);
 });
+
+test("missing Claude marketplace fails validation", (t) => {
+  const f = marketplaceFixture(t);
+  rmSync(join(f.dir, ".claude-plugin/marketplace.json"));
+  const result = f.validate();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /claude-plugin\/marketplace.json not found/);
+});
+
+test("the Claude marketplace cannot target the Codex package", (t) => {
+  const f = marketplaceFixture(t);
+  const path = join(f.dir, ".claude-plugin/marketplace.json");
+  const data = JSON.parse(readFileSync(path, "utf8"));
+  data.plugins.find((entry) => entry.name === "pstack").source = "./harness/pstack/codex";
+  writeFileSync(path, JSON.stringify(data));
+  const result = f.validate();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Claude marketplace must select/);
+});

@@ -60,7 +60,7 @@ Follow the source steps, including its budget labels, role list, panel sizes, co
 | `.cursor/skills/`, `~/.cursor/skills/` | `.claude/skills/`, `$CLAUDE_CONFIG_DIR/skills/` (default `~/.claude/skills/`). |
 | `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | `$CLAUDE_CONFIG_DIR/plugins/` (default `~/.claude/plugins/`), `.claude-plugin/plugin.json`. |
 | `.cursor/rules/*.mdc`, always-applied rules | `CLAUDE.md` or Claude's `.md` rules. Newer versions can load `AGENTS.md` as a fallback, depending on project instruction settings. Verify it is loaded; do not assume `.mdc` is read. The dedicated model rule is described above. |
-| `https://github.com/cursor/plugins/blob/main/pstack/<path>` | Read `<pstack>/<path>` when shipped. For this port's public copy use `https://github.com/janozeli/pstack-claude/blob/main/pstack/<path>`. |
+| `https://github.com/cursor/plugins/blob/main/pstack/<path>` | Read `<pstack>/<path>` when shipped. For this port's public copy use `https://github.com/janozeli/pstack-port/blob/main/pstack/<path>`. |
 | Transcripts in `~/.cursor/projects/<slug>/agent-transcripts/` | `$CLAUDE_CONFIG_DIR/projects/` (default `~/.claude/projects/`). Parent transcripts are `<project>/<session>.jsonl`; subagents are nested under `<session>/subagents/`. Folder naming alone does not establish workspace or session identity. |
 
 ## Session identity and worktree history

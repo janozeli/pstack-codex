@@ -116,12 +116,22 @@ for (const entry of marketplace.plugins ?? []) {
 }
 
 const claudeMarketplacePath = resolve(root, ".claude-plugin/marketplace.json");
-const claudeMarketplace = existsSync(claudeMarketplacePath)
-  ? loadJSON(claudeMarketplacePath)
-  : { plugins: [] };
+if (!existsSync(claudeMarketplacePath)) {
+  fail(".claude-plugin/marketplace.json not found");
+  process.exit(1);
+}
+const claudeMarketplace = loadJSON(claudeMarketplacePath);
+if (!validateMarketplace(claudeMarketplace)) {
+  fail("Claude marketplace schema validation failed");
+  process.exit(1);
+}
 
 for (const entry of claudeMarketplace.plugins ?? []) {
   const pluginDir = resolve(root, entry.source);
+  if (entry.name === "pstack" && pluginDir !== resolve(root, "harness/pstack/claude-code")) {
+    fail('Plugin "pstack": Claude marketplace must select "./harness/pstack/claude-code"');
+    continue;
+  }
   const pluginJsonPath = resolve(pluginDir, ".claude-plugin/plugin.json");
 
   if (!existsSync(pluginJsonPath)) {

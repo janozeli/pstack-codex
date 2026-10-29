@@ -20,13 +20,13 @@ const TARGETS = [
     tree: "claude-code",
     harness: "Claude Code",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    manifestFields: { version: "0.15.36-claude.3", homepage: "https://github.com/janozeli/pstack-claude", repository: "https://github.com/janozeli/pstack-claude" },
+    manifestFields: { version: "0.15.36-claude.4", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
   },
   {
     tree: "codex",
     harness: "Codex",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/", version: "0.15.36-codex.2", homepage: "https://github.com/janozeli/pstack-codex", repository: "https://github.com/janozeli/pstack-codex" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.3", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
     userInvoked: CODEX_POLICY,
   },
 ];
@@ -116,7 +116,7 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
       const target = resolve(path, href);
       if (!target || target.split("/")[0] === ".." || has(files, target)) return link;
       const kind = statSync(join(PSTACK, target)).isDirectory() ? "tree" : "blob";
-      return `](https://github.com/janozeli/pstack-${harness === "Codex" ? "codex" : "claude"}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
+      return `](https://github.com/janozeli/pstack-port/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
     });
     entry.bytes = Buffer.from(text);
   }

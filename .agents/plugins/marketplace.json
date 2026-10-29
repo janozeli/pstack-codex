@@ -1,7 +1,7 @@
 {
-  "name": "pstack-codex",
+  "name": "pstack-port",
   "interface": {
-    "displayName": "pstack Codex"
+    "displayName": "pstack"
   },
   "plugins": [
     {
