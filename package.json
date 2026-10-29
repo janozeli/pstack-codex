@@ -5,6 +5,7 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "verify:lean": "node verification/lean/check.mjs",
     "test": "node --test scripts/test/*.test.mjs",
     "typecheck:statechart": "tsc -p pstack/skills/statechart/scripts/tsconfig.json",
     "test:statechart": "node --disable-warning=ExperimentalWarning --test --test-reporter=tap --test-concurrency=2 pstack/skills/statechart/scripts/test/*.test.ts"
