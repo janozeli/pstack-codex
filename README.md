@@ -39,15 +39,15 @@ Read the [native runtime contracts](harness/pstack/codex/docs/runtime.md) and [s
 `pstack/` is the source; `harness/pstack/codex/` is the installable generated package. Edit the source and scripts/standalone/ compiler, then regenerate. The repository retains upstream history and the other source trees to make future upstream synchronization reviewable. Its Codex marketplace exposes only pstack.
 
 ```bash
-npm install --no-save ajv ajv-formats fast-check@4.5.3
+npm ci
 node scripts/generate-pstack-harness-trees.mjs
 node scripts/validate-plugins.mjs
 node scripts/generate-pstack-harness-trees.mjs --check
 node scripts/check-pstack-docs.mjs
-node --test scripts/test/*.test.mjs
-node --disable-warning=ExperimentalWarning --test pstack/skills/*/scripts/test/*.test.ts
+npm test
+npm run typecheck:statechart
 ```
 
-Tests requiring TLC are skipped when `TLA2TOOLS` is unavailable. Native installation and discovery should also be checked in an isolated Codex configuration before release. Runtime tests cover worktree history; they do not execute every workflow with external models or services.
+See [Tests and CI](docs/testing.md) for all Bun suites, real TLC execution and isolated native installation checks. CI requires zero skipped statechart tests and verifies both hosts with pinned CLIs. Runtime tests do not execute every workflow with external models or services.
 
 This port starts from `janozeli/pstack-codex` commit `d1c670b8d371200f4b15c2b2038818181e9a6c41`. The original author credit and [MIT license](pstack/LICENSE) are retained. Port releases use a `-codex.N` version suffix to distinguish them from upstream releases.

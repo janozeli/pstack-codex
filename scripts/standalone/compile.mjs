@@ -140,6 +140,11 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   for (const skill of skillNames) {
     text = text.replace(new RegExp('(?<![\\w/:])/'+skill+'(?![\\w/-])','g'), invoke+skill);
   }
+  // Keep links aligned with headings whose slash commands gained a namespace.
+  for (const slug of ['vet-a-measured-number-with-benchmark-checklist', 'fix-the-environment-with-correct']) {
+    const split = slug.lastIndexOf('-with-') + '-with-'.length;
+    text = text.replaceAll('#' + slug, '#' + slug.slice(0, split) + 'pstack' + slug.slice(split));
+  }
   if ((path.endsWith('/SKILL.md') && /Task|AskQuestion|\.cursor|Cursor|inherit-parent|Grok Bot|create-skill|agent-transcripts|\/loop/.test(input)) || path.startsWith('agents/')) {
     text = text.replace(/^(# .*)\n+/m, `$1\n\nFollow the [native runtime contracts](${root}docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities.\n\n`);
   }
@@ -151,7 +156,10 @@ export { runtime };
 
 export function compileAudit(input, host) {
   const harness = host === 'Codex' ? 'codex' : 'claude';
-  return input
+  for (const marker of ['harness=cursor', 'cursor|codex|claude', '# Transcripts dir:', 'history_complete=yes', 'elif [ -d "$transcripts" ]; then']) {
+    if (!input.includes(marker)) throw new Error(`audit source section changed: ${marker}`);
+  }
+  const output = input
     .replace(/harness=cursor\n(?:\[ -f .*\n)+/, `harness=${harness}\n`)
     .replaceAll('cursor|codex|claude', harness)
     .replaceAll('cursor, codex or claude', harness)
@@ -159,4 +167,11 @@ export function compileAudit(input, host) {
     .replace(/# Transcripts dir:[\s\S]*?history_complete=yes/, 'history_complete=yes')
     .replaceAll('if [ "$harness" != cursor ]; then', 'if [ -n "$harness" ]; then')
     .replace(/\telif \[ -d "\$transcripts" \]; then[\s\S]*?\n\tfi/, '\n\tfi');
+  if (/harness=cursor|cursor\|codex|\$transcripts/.test(output)) throw new Error('audit source structure changed');
+  return output;
+}
+
+export function compilePlanChecker(input) {
+  if (!input.includes('/loop 1h')) throw new Error('plan checker source cadence changed');
+  return input.replaceAll('/loop 1h', 'persistent monitoring 1h');
 }

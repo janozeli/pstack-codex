@@ -4,7 +4,7 @@ import { once } from "node:events";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { test } from "node:test";
+import { test, type TestContext } from "node:test";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { plainText } from "../backends/plain-text.ts";
@@ -222,14 +222,16 @@ function startCommand(
   parent: string,
   {
     java = path.join(here, "java.ts"),
+    preload,
     tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-tmpdir-")),
-  }: { java?: string; tmpdir?: string } = {},
+  }: { java?: string; tmpdir?: string; preload?: string } = {},
 ) {
   const name = path.basename(dir);
   const view = path.join(dir, "view.mjs");
   return spawn(
     process.execPath,
     [
+      ...(preload ? ["--import", preload] : []),
       path.join(here, "../statechart.ts"),
       path.join(dir, `${name}.tla`),
       ...(fs.existsSync(view) ? ["--view", view] : []),
@@ -250,27 +252,40 @@ function startCommand(
 }
 
 async function signalWhile<T extends { dir: string; reached: (parent: string) => boolean }>(
+  t: TestContext,
   signal: NodeJS.Signals,
-  setup: (fakes: string) => T & { java?: string },
+  setup: (fakes: string) => T & { java?: string; preload?: string },
 ) {
   const fakes = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-fakes-"));
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-parent-"));
   const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-tmpdir-"));
+  t.after(() => {
+    for (const dir of [fakes, parent, tmpdir]) fs.rmSync(dir, { recursive: true, force: true });
+  });
   const phase = setup(fakes);
-  const child = startCommand(phase.dir, parent, { java: phase.java, tmpdir });
+  const child = startCommand(phase.dir, parent, { java: phase.java, preload: phase.preload, tmpdir });
   let stderr = "";
   child.stderr.on("data", (chunk: Buffer) => (stderr += chunk));
   const closed = once(child, "close");
-  const end = Date.now() + 60_000;
-  while (!phase.reached(parent))
-    assert.ok(Date.now() < end, "The command did not reach the phase.");
-  child.kill(signal);
-  const [status] = await closed;
-  assert.equal(stderr, `${signal} stopped the check, so the command wrote nothing.\n`);
-  assert.equal(status, 128 + os.constants.signals[signal]);
-  assert.deepEqual(fs.readdirSync(parent), []);
-  assert.deepEqual(fs.readdirSync(tmpdir), []);
-  return phase;
+  try {
+    const end = Date.now() + 30_000;
+    while (!phase.reached(parent)) {
+      assert.equal(child.exitCode, null, `Command exited before the phase: ${stderr}`);
+      assert.equal(child.signalCode, null, `Command was killed before the phase: ${stderr}`);
+      assert.ok(Date.now() < end, "The command did not reach the phase.");
+      await sleep(10);
+    }
+    assert.ok(child.kill(signal), "The phase must still be running when signalled.");
+    const [status] = await closed;
+    assert.equal(stderr, `${signal} stopped the check, so the command wrote nothing.\n`);
+    assert.equal(status, 128 + os.constants.signals[signal]);
+    assert.deepEqual(fs.readdirSync(parent), []);
+    assert.deepEqual(fs.readdirSync(tmpdir), []);
+    return phase;
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+    await closed;
+  }
 }
 
 async function assertGone(pid: number) {
@@ -411,8 +426,8 @@ for (const signal of ["SIGINT", "SIGTERM"] satisfies NodeJS.Signals[]) {
   test(
     `${signal} stops TLC, removes the temporary folder, and writes nothing`,
     { timeout: 30_000 },
-    async () => {
-      const { pidFile } = await signalWhile(signal, (fakes) => {
+    async (t) => {
+      const { pidFile } = await signalWhile(t, signal, (fakes) => {
         const fake = sleepyJava(fakes);
         return {
           dir: path.join(corpus, "DieHard"),
@@ -427,8 +442,8 @@ for (const signal of ["SIGINT", "SIGTERM"] satisfies NodeJS.Signals[]) {
   test(
     `${signal} while the view draws the chart stops the command, and it writes nothing`,
     { timeout: 60_000 },
-    () =>
-      signalWhile(signal, (fakes) => {
+    async (t) => {
+      await signalWhile(t, signal, (fakes) => {
         const drawing = path.join(fakes, "drawing");
         const dir = copyCase("Login", (d) =>
           fs.writeFileSync(
@@ -444,25 +459,42 @@ for (const signal of ["SIGINT", "SIGTERM"] satisfies NodeJS.Signals[]) {
           ),
         );
         return { dir, reached: () => fs.existsSync(drawing) };
-      }),
+      });
+    },
   );
 
   test(
     `${signal} while the command writes its files stops it, and it writes nothing`,
     { timeout: 60_000 },
-    () =>
-      signalWhile(signal, () => ({
-        dir: gridCase(150),
-        reached: (parent) => {
-          for (const f of fs.readdirSync(parent, { recursive: true, encoding: "utf8" }))
-            if (
-              path.basename(f) === "chart.mmd" &&
-              fs.statSync(path.join(parent, f), { throwIfNoEntry: false })?.size
-            )
-              return true;
-          return false;
-        },
-      })),
+    async (t) => {
+      await signalWhile(t, signal, (fakes) => {
+        const writing = path.join(fakes, "writing");
+        const preload = path.join(fakes, "hold-write.mjs");
+        // Pause the real worker after its first chart write. This makes the
+        // cancellation phase stable without adding a test hook to production.
+        fs.writeFileSync(preload, `
+import fs from "node:fs";
+import path from "node:path";
+const open = fs.openSync;
+const write = fs.writeSync;
+let chart;
+fs.openSync = function(file, ...args) {
+  const fd = open.call(this, file, ...args);
+  if (String(file).endsWith(path.join("draft", "chart.mmd"))) chart = fd;
+  return fd;
+};
+fs.writeSync = function(fd, ...args) {
+  const count = write.call(this, fd, ...args);
+  if (fd === chart) {
+    fs.writeFileSync(${JSON.stringify(writing)}, "ready");
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
+  }
+  return count;
+};
+`);
+        return { dir: path.join(corpus, "Counter"), preload, reached: () => fs.existsSync(writing) };
+      });
+    },
   );
 }
 
