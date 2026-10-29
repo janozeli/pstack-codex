@@ -1,5 +1,7 @@
 # pstack
 
+This is the Claude Code port maintained by [janozeli](https://github.com/janozeli/pstack-claude). The original method and the introduction below are by Lauren Tan (poteto). The port changes host integration; it preserves the source roles and panel sizes.
+
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.
 
 there's a growing sense that ai writes too much slop code. i agree. i don't want to ship like a team of twenty slop artists. throughput without quality is not a goal i aspire to. if you want to go fast, go deep first. 
@@ -21,8 +23,8 @@ fork it. improve it. make it yours. PRs are welcome!
 in claude code:
 
 ```bash
-/plugin marketplace add cursor/plugins
-/plugin install pstack@cursor-plugins
+/plugin marketplace add janozeli/pstack-claude
+/plugin install pstack@pstack-claude
 ```
 
 in codex, install this fork from a local clone:
@@ -40,9 +42,9 @@ codex plugin marketplace add "$(pwd)"
 codex plugin add pstack@cursor-plugins
 ```
 
-claude code leaves auto-update off for third-party marketplaces, so pstack stays on the version you installed. to turn it on, run `/plugin`, open the **marketplaces** tab, select `cursor-plugins`, and choose **enable auto-update**. to update once by hand, run `claude plugin update pstack@cursor-plugins`.
+claude code leaves auto-update off for third-party marketplaces, so pstack stays on the version you installed. to turn it on, run `/plugin`, open the **marketplaces** tab, select `pstack-claude`, and choose **enable auto-update**. to update once by hand, run `claude plugin update pstack@pstack-claude`.
 
-claude code prefixes plugin commands and agents, so `/poteto-mode` is `/pstack:poteto-mode`. the [claude code adapter](./docs/harness/claude-code.md) maps every other cursor name. in claude code, `/pstack:setup-pstack` writes your model choices to `~/.claude/rules/pstack-models.md`, and a step that needs a cursor-only feature, such as bugbot or automations, is skipped with a one-line note.
+claude code prefixes plugin commands and agents, so `/poteto-mode` is `/pstack:poteto-mode`. the [claude code adapter](./docs/harness/claude-code.md) maps every other cursor name. in claude code, `/pstack:setup-pstack` writes your model choices to `~/.claude/rules/pstack-models.md`, and a step that needs a cursor-only feature, such as bugbot or automations, uses a verified host equivalent or remains incomplete along with its dependent steps.
 
 codex runs plugin skills with a `$pstack:` prefix, so `/poteto-mode` is `$pstack:poteto-mode`. the [codex adapter](./docs/harness/codex.md) maps every other cursor name. in codex, `$pstack:setup-pstack` writes your model choices to a marked block in `~/.codex/AGENTS.md`.
 

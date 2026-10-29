@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import test from "node:test";
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+function walk(dir) {
+  return readdirSync(dir).flatMap(name => {
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? walk(path) : [path];
+  });
+}
+for (const host of ["codex", "claude-code"]) {
+  test(`${host} ships native instructions without a runtime translation adapter`, () => {
+    const dir = join(root, "harness/pstack", host);
+    assert.equal(existsSync(join(dir, "docs/harness")), false);
+    const forbidden = /\.cursor(?:\/|-plugin)|cursor-team-kit|api2\.cursor\.sh|\bAskQuestion\b|\bgeneralPurpose\b|\bcloud_base_branch\b|\bfile_attachments\b|`Task`|\bTask tool\b|maps the Cursor names|read \[the .* adapter/;
+    const failures = walk(dir).filter(p => /\.(md|sh|mjs|json)$/.test(p)).flatMap(p =>
+      readFileSync(p, "utf8").split("\n").flatMap((line, i) => forbidden.test(line) ? [`${p.slice(dir.length + 1)}:${i + 1}: ${line.slice(0,150)}`] : []));
+    assert.deepEqual(failures, [], failures.join("\n"));
+  });
+  test(`${host} has the original complete skill and playbook inventory`, () => {
+    const names = dir => readdirSync(dir).filter(name => existsSync(join(dir,name,"SKILL.md"))).sort();
+    assert.deepEqual(names(join(root,"harness/pstack",host,"skills")), names(join(root,"pstack/skills")));
+    const source = readdirSync(join(root,"pstack/skills/poteto-mode/playbooks")).sort();
+    assert.deepEqual(readdirSync(join(root,"harness/pstack",host,"skills/poteto-mode/playbooks")).sort(),source);
+  });
+}
+
+for (const host of ['codex', 'claude-code']) {
+  test(`${host} resolves all packaged relative documentation links`, () => {
+    const dir = join(root,'harness/pstack',host);
+    const missing = [];
+    for (const file of walk(dir).filter(p => p.endsWith('.md'))) {
+      for (const [,href] of readFileSync(file,'utf8').matchAll(/\]\(([^)\s]+)\)/g)) {
+        if (/^[a-z]+:|^#/i.test(href) || href === 'url') continue;
+        const target = resolve(dirname(file),href.split(/[?#]/)[0]);
+        if (!target.startsWith(dir+'/') || !existsSync(target)) missing.push(`${file.slice(dir.length+1)} -> ${href}`);
+      }
+    }
+    assert.deepEqual(missing,[]);
+  });
+}
+
+for (const host of ['codex','claude-code']) {
+  test(`${host} preserves setup roles and panel sizes`, () => {
+    const roles = file => {
+      const text = readFileSync(file,'utf8');
+      const table = text.slice(text.indexOf('# budget:')).split('```')[0];
+      return table.split('\n').filter(line => /^[a-z][^:]+: /.test(line)).map(line => {
+        const split = line.indexOf(': ');
+        return [line.slice(0,split),line.slice(split+2).split(', ').length];
+      });
+    };
+    assert.deepEqual(roles(join(root,'harness/pstack',host,'skills/setup-pstack/SKILL.md')), roles(join(root,'pstack/skills/setup-pstack/SKILL.md')));
+    const scripts = join(root,'harness/pstack',host,'skills/poteto-mode/scripts');
+    assert.equal(existsSync(join(scripts,`${host === 'codex' ? 'claude' : 'codex'}-worktree-activity.mjs`)),false);
+  });
+}
+
+test('the compiler rejects a new unmapped source host dependency', async () => {
+  const { compileMarkdown } = await import('../standalone/compile.mjs');
+  for (const host of ['Codex','Claude Code']) {
+    assert.throws(() => compileMarkdown('skills/example/SKILL.md','# Example\n\nRead `.cursor/new-service/state` before acting.\n',host,['example']), /unresolved host dependency/);
+  }
+});
+
+test('Codex reset instructions preserve the shared AGENTS.md file', () => {
+  const guide = readFileSync(join(root,'harness/pstack/codex/docs/guide/01-setup.md'),'utf8');
+  assert.doesNotMatch(guide, /delete the file/);
+  assert.match(guide, /remove only.*pstack models.*block/i);
+  assert.match(guide, /Preserve.*outside.*block/i);
+});

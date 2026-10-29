@@ -3,6 +3,7 @@
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { compileMarkdown, compileAudit, runtime } from "./standalone/compile.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PSTACK = join(ROOT, "pstack");
@@ -11,68 +12,29 @@ const SKILLS = join(PSTACK, "skills");
 const OUT = join(ROOT, "harness", "pstack");
 const GUIDE = "docs/guide";
 // Codex ignores `disable-model-invocation`, and this file keeps the skill out of its model catalog.
-// The Claude Code tree ships it too, because Codex also installs that tree through its root manifest.
 const CODEX_POLICY = { path: "agents/openai.yaml", text: "policy:\n  allow_implicit_invocation: false\n" };
 const TARGETS = [
   {
     tree: "claude-code",
     harness: "Claude Code",
-    adapter: "docs/harness/claude-code.md",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    userInvoked: CODEX_POLICY,
+    manifestFields: { version: "0.15.36-claude.2", homepage: "https://github.com/janozeli/pstack-claude", repository: "https://github.com/janozeli/pstack-claude" },
   },
   {
     tree: "codex",
     harness: "Codex",
-    adapter: "docs/harness/codex.md",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.1", homepage: "https://github.com/janozeli/pstack-codex", repository: "https://github.com/janozeli/pstack-codex" },
     userInvoked: CODEX_POLICY,
   },
 ];
 const COMMAND = "node scripts/generate-pstack-harness-trees.mjs";
-const GITHUB = "https://github.com/cursor/plugins";
 const LINK = /\]\(([^)\s]+)\)/g;
-const README = `# pstack harness tree
+const README = `# Generated standalone packages
 
-This folder is generated from \`pstack/skills\`, \`pstack/agents\`, \`pstack/${GUIDE}\`, ${TARGETS.map(({ adapter }) => `\`pstack/${adapter}\``).join(", ")}, \`pstack/README.md\`, \`pstack/LICENSE\`, and \`pstack/plugin.json\`. Do not edit it by hand.
-
-Cursor uses \`pstack/\` directly. ${TARGETS.map(({ tree, harness }) => `${harness} installs \`${tree}/\``).join(", and ")}. Each tree ships only its own harness adapter and leaves out the rest of \`pstack/\`, such as \`pstack/automations\` and \`pstack/assets\`. A relative link to a pstack file that a tree leaves out points at that file on GitHub \`main\` instead.
-
-After editing those sources, run \`${COMMAND}\` from the repository root and commit the result.
+Edit the shared source in pstack/ and the host compiler in scripts/standalone/, then run ${COMMAND}. Each package contains native instructions, runtime contracts, skill references, and its own history reader. No runtime translation adapter is installed. Both targets preserve the source skill and playbook inventory.
 `;
 
-const TERMS = [
-  { key: "`Task`", re: /`Task`|\bTask (tool|subagent|call)/ },
-  { key: "`AskQuestion`", re: /AskQuestion/ },
-  { key: "todolist", re: /\btodo ?list\b/i },
-  { key: "generalPurpose", re: /generalPurpose/ },
-  { key: "poteto-agent", re: /poteto-agent/ },
-  { key: "comment-sicko", re: /comment-sicko/ },
-  { key: "`readonly: true`", re: /readonly: (true|false)|readonly\/Ask/ },
-  { key: "`environment: \"cloud\"`", re: /environment: "(cloud|local)"/ },
-  { key: "cloud_base_branch", re: /cloud_base_branch/ },
-  { key: "`run_in_background: true`", re: /run_in_background/ },
-  { key: "`resume`", re: /`resume`/ },
-  { key: "`file_attachments`", re: /file_attachments/ },
-  { key: "claude-", re: /\bclaude-[a-z]+-\d/ },
-  { key: "grok-", re: /\bgrok-\d/ },
-  { key: "gpt-", re: /\bgpt-\d/ },
-  { key: "inherit-parent", re: /inherit-parent/ },
-  { key: "pstack-models.mdc", re: /pstack-models\.mdc/ },
-  { key: ".cursor/skills/", re: /\.cursor\/skills/ },
-  { key: "~/.cursor/plugins/", re: /\.cursor\/plugins|\.cursor-plugin/ },
-  { key: ".cursor/rules/", re: /\.cursor\/rules|always-applied rule/ },
-  { key: "agent-transcripts", re: /agent-transcripts|\.cursor\/projects/ },
-  { key: "Cursor-only features", re: /Bugbot|Cursor [Aa]utomation|cursor\.(sh|com)\/automations|[Cc]loud [Aa]gent|built-in PR tool/ },
-  { key: "`create-skill`", re: /\bcreate-skill\b/, harness: "Codex" },
-  { key: "`deslop`", re: /\bdeslop\b/, harness: "Codex" },
-  { key: "`control-cli`", re: /\bcontrol-cli\b/, harness: "Codex" },
-  { key: "`control-ui`", re: /\bcontrol-ui\b/, harness: "Codex" },
-  { key: "`/loop`", re: /\/loop\b/, harness: "Codex" },
-  { key: "Project tracker and Project store", re: /Project (tracker|store)/, harness: "Codex" },
-];
-const ROUTE_KEY = "Run another pstack skill";
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function walk(dir) {
@@ -89,45 +51,14 @@ function file(path) {
 
 const skills = readdirSync(SKILLS).filter((name) => existsSync(join(SKILLS, name, "SKILL.md")));
 
-function classify(skill) {
-  const dir = join(SKILLS, skill);
-  const others = skills.filter((name) => name !== skill).join("|");
-  const route = new RegExp(`the \\*\\*(?<bold>${others})\\*\\* skill|\`/(?<command>${others})\``, "g");
-  const linksToSkill = (line, name) => line.includes(`(../${name}/`);
-  const namesBareSkill = (line) =>
-    [...line.matchAll(route)].some(({ groups }) => !linksToSkill(line, groups.bold ?? groups.command));
-  const usesCursorNames = new Set();
-  for (const path of walk(dir).filter((path) => path.endsWith(".md"))) {
-    const text = readFileSync(path, "utf8");
-    for (const term of TERMS) if (term.re.test(text)) usesCursorNames.add(term.key);
-    if (text.split("\n").some(namesBareSkill)) usesCursorNames.add(ROUTE_KEY);
-  }
-  const text = readFileSync(join(dir, "SKILL.md"), "utf8");
-  const wrap = usesCursorNames.size > 0 && /^# /m.test(text);
-  return { usesCursorNames, wrap };
-}
-
-const classes = new Map(skills.map((skill) => [skill, classify(skill)]));
 const problems = [];
-const users = new Map();
 const userInvoked = new Set();
-for (const [skill, { usesCursorNames, wrap }] of classes) {
-  if (usesCursorNames.size > 0 && !wrap) problems.push(`skills/${skill}/SKILL.md uses Cursor names but has no H1`);
-  for (const key of usesCursorNames) users.set(key, [...(users.get(key) ?? []), skill]);
-  // Cursor runs a skill by its folder name and Claude Code lists it by its frontmatter `name`, so the two must match. The Agent Skills spec limits both to SKILL_NAME.
+for (const skill of skills) {
   const frontmatter = readFileSync(join(SKILLS, skill, "SKILL.md"), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
   const name = frontmatter.match(/^name:(.*)$/m)?.[1].trim().replace(/^(["'])(.*)\1$/, "$2");
   if (/^disable-model-invocation:\s*true\s*$/m.test(frontmatter)) userInvoked.add(skill);
   if (name !== skill) problems.push(`skills/${skill}/SKILL.md has name ${JSON.stringify(name ?? "")}, not its folder name ${skill}`);
   if (!SKILL_NAME.test(skill) || skill.length > 64) problems.push(`skills/${skill} is not lowercase words joined by hyphens, at most 64 characters`);
-}
-for (const { harness, adapter } of TARGETS) {
-  const text = readFileSync(join(PSTACK, adapter), "utf8");
-  for (const [key, using] of users) {
-    const target = TERMS.find((term) => term.key === key)?.harness;
-    if (target && target !== harness) continue;
-    if (!text.includes(key)) problems.push(`${harness} adapter has no row for ${key}, used by ${using.join(", ")}`);
-  }
 }
 for (const problem of problems) console.log(`FAIL ${problem}`);
 if (problems.length > 0) process.exit(1);
@@ -144,23 +75,24 @@ function has(files, path) {
   return files.has(path) || [...files.keys()].some((key) => key.startsWith(`${path}/`));
 }
 
-function render({ harness, adapter, manifests, manifestFields, userInvoked: policy }) {
-  // Skills read the adapter, the guide, and the README at runtime, so the harness never fetches them.
+function render({ harness, manifests, manifestFields, userInvoked: policy }) {
+  // Compile the shared methodology into native instructions before packaging.
   const copies = [
     ...walk(SKILLS),
     ...walk(join(PSTACK, "agents")),
     ...walk(join(PSTACK, GUIDE)),
-    join(PSTACK, adapter),
     join(PSTACK, "README.md"),
   ];
   const files = new Map(copies.map((path) => [relative(PSTACK, path), file(path)]));
-  const line =
-    `In ${harness}, read [the ${harness} adapter](../../${adapter}) once per session before you follow this skill. ` +
-    `It maps the Cursor names in pstack skills to ${harness}.`;
-  for (const [skill, { wrap }] of classes) {
-    const path = `skills/${skill}/SKILL.md`;
-    const text = files.get(path).bytes.toString("utf8");
-    if (wrap) files.get(path).bytes = Buffer.from(text.replace(/^(# .*)\n+/m, `$1\n\n${line}\n\n`));
+  const nativeHistory = harness === "Codex" ? "codex" : "claude";
+  files.delete(`skills/poteto-mode/scripts/${nativeHistory === "codex" ? "claude" : "codex"}-worktree-activity.mjs`);
+  const audit = files.get("skills/poteto-mode/scripts/worktree-audit.sh");
+  audit.bytes = Buffer.from(compileAudit(audit.bytes.toString("utf8"), harness));
+  files.set("docs/runtime.md", { bytes: Buffer.from(runtime(harness)), executable: false });
+  for (const [path, entry] of files) {
+    if (path.endsWith(".md") && path !== "docs/runtime.md") {
+      entry.bytes = Buffer.from(compileMarkdown(path, entry.bytes.toString("utf8"), harness, skills));
+    }
   }
   files.set("LICENSE", file(join(PSTACK, "LICENSE")));
   const manifest = file(join(PSTACK, "plugin.json"));
@@ -177,7 +109,7 @@ function render({ harness, adapter, manifests, manifestFields, userInvoked: poli
       const target = resolve(path, href);
       if (!target || target.split("/")[0] === ".." || has(files, target)) return link;
       const kind = statSync(join(PSTACK, target)).isDirectory() ? "tree" : "blob";
-      return `](${GITHUB}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
+      return `](https://github.com/janozeli/pstack-${harness === "Codex" ? "codex" : "claude"}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
     });
     entry.bytes = Buffer.from(text);
   }
@@ -221,6 +153,5 @@ if (process.argv.includes("--check")) {
     writeFileSync(join(OUT, path), bytes);
     chmodSync(join(OUT, path), executable ? 0o755 : 0o644);
   }
-  const wrapped = [...classes.values()].filter(({ wrap }) => wrap).length;
-  console.log(`${skills.length} skills, ${wrapped} SKILL.md files with the adapter line, ${userInvoked.size} hidden from the Codex model`);
+  console.log(`${skills.length} standalone skills per host; ${userInvoked.size} hidden from the Codex model`);
 }
