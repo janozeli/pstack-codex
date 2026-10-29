@@ -26,11 +26,20 @@ jobs:
       - name: Install dependencies
         run: npm install --no-save ajv ajv-formats fast-check@4.5.3
 
+      - name: Install audit test tools
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep
+
       - name: Validate plugin definitions
         run: node scripts/validate-plugins.mjs
 
       - name: Check generated pstack harness trees
         run: node scripts/generate-pstack-harness-trees.mjs --check
+
+      - name: Check pstack documentation
+        run: node scripts/check-pstack-docs.mjs
+
+      - name: Test Codex runtime and packaging
+        run: node --test scripts/test/*.test.mjs
 
       - name: Test pstack skill scripts
         run: node --disable-warning=ExperimentalWarning --test pstack/skills/*/scripts/test/*.test.ts

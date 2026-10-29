@@ -117,9 +117,11 @@ for (const entry of claudeMarketplace.plugins ?? []) {
 }
 
 const codexMarketplacePath = resolve(root, ".agents/plugins/marketplace.json");
-const codexMarketplace = existsSync(codexMarketplacePath)
-  ? loadJSON(codexMarketplacePath)
-  : { plugins: [] };
+if (!existsSync(codexMarketplacePath)) {
+  fail(".agents/plugins/marketplace.json not found");
+  process.exit(1);
+}
+const codexMarketplace = loadJSON(codexMarketplacePath);
 const codexEntries = (codexMarketplace.plugins ?? []).map((entry) => ({
   name: entry.name,
   source: entry.source?.path,
@@ -128,7 +130,7 @@ const codexEntries = (codexMarketplace.plugins ?? []).map((entry) => ({
 // Codex reads only .agents/plugins/marketplace.json when it exists, so it must list every Claude marketplace plugin.
 const claudeNames = (claudeMarketplace.plugins ?? []).map(({ name }) => name).sort();
 const codexNames = codexEntries.map(({ name }) => name).sort();
-if (existsSync(codexMarketplacePath) && claudeNames.join() !== codexNames.join()) {
+if (claudeNames.join() !== codexNames.join()) {
   fail(
     `Codex marketplace lists [${codexNames.join(", ")}], but the Claude marketplace lists [${claudeNames.join(", ")}]`
   );
@@ -140,13 +142,20 @@ for (const entry of codexEntries) {
     continue;
   }
   const pluginDir = resolve(root, entry.source);
-  const pluginJsonPath = [".codex-plugin/plugin.json", ".claude-plugin/plugin.json"]
+  if (entry.name === "pstack" && pluginDir !== resolve(root, "harness/pstack/codex")) {
+    fail('Plugin "pstack": Codex marketplace must select "./harness/pstack/codex"');
+    continue;
+  }
+  const manifests = entry.name === "pstack"
+    ? [".codex-plugin/plugin.json"]
+    : [".codex-plugin/plugin.json", ".claude-plugin/plugin.json"];
+  const pluginJsonPath = manifests
     .map((path) => resolve(pluginDir, path))
     .find((path) => existsSync(path));
 
   if (!pluginJsonPath) {
     fail(
-      `Plugin "${entry.name}": missing .codex-plugin/plugin.json or .claude-plugin/plugin.json in "${entry.source}"`
+      `Plugin "${entry.name}": missing ${manifests.join(" or ")} in "${entry.source}"`
     );
     continue;
   }

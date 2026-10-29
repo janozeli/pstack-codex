@@ -25,10 +25,18 @@ in claude code:
 /plugin install pstack@cursor-plugins
 ```
 
-in codex:
+in codex, install this fork from a local clone:
 
 ```bash
-codex plugin marketplace add cursor/plugins
+git clone https://github.com/janozeli/pstack-codex.git
+cd pstack-codex
+codex plugin marketplace list
+```
+
+the fork keeps the marketplace name `cursor-plugins`. if that name is already configured, verify that it points to this clone before installing. an entry pointing to `cursor/plugins` installs the upstream package. do not overwrite another marketplace silently.
+
+```bash
+codex plugin marketplace add "$(pwd)"
 codex plugin add pstack@cursor-plugins
 ```
 
