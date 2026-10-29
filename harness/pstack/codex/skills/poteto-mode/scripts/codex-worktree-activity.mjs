@@ -2,9 +2,12 @@
 
 import { execFileSync } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { readdir, readlink, realpath, stat } from "node:fs/promises";
+import { readdir, readFile, readlink, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
+import { Readable } from "node:stream";
+import { StringDecoder } from "node:string_decoder";
+import { createZstdDecompress } from "node:zlib";
 
 async function canonical(path) {
   try {
@@ -40,13 +43,56 @@ async function* transcripts(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) yield* transcripts(path);
-    else if (entry.isFile() && entry.name.startsWith("rollout-") && entry.name.endsWith(".jsonl")) yield path;
+    else if (entry.isFile() && entry.name.startsWith("rollout-") && /\.jsonl(\.zst)?$/.test(entry.name)) yield path;
   }
+}
+
+// Reads one zstd frame's header and walks its block headers, so a cut, an unterminated
+// frame, a missing checksum or trailing bytes fail instead of decoding a prefix.
+function frameSize(frame) {
+  if (frame.length < 6 || frame.readUInt32LE(0) !== 0xfd2fb528) throw new Error("a compressed rollout is not a zstd frame");
+  const descriptor = frame[4];
+  const single = (descriptor >> 5) & 1;
+  const sizeBytes = [single, 2, 4, 8][descriptor >> 6];
+  let offset = 5 + (single ? 0 : 1) + [0, 1, 2, 4][descriptor & 3];
+  let size = null;
+  if (sizeBytes === 1) size = frame[offset];
+  else if (sizeBytes === 2) size = frame.readUInt16LE(offset) + 256;
+  else if (sizeBytes === 4) size = frame.readUInt32LE(offset);
+  else if (sizeBytes === 8) size = Number(frame.readBigUInt64LE(offset));
+  offset += sizeBytes;
+  for (let last = 0; !last;) {
+    if (offset + 3 > frame.length) throw new Error("a compressed rollout is incomplete");
+    const header = frame.readUIntLE(offset, 3);
+    last = header & 1;
+    offset += 3 + (((header >> 1) & 3) === 1 ? 1 : header >> 3);
+  }
+  if (offset + ((descriptor >> 2) & 1) * 4 !== frame.length) throw new Error("a compressed rollout is incomplete");
+  return size;
+}
+
+// Codex compresses older rollouts to .jsonl.zst. Node's zstd decoder accepts a truncated
+// frame silently, so a compressed rollout counts only as a complete frame.
+async function* text(path) {
+  if (!path.endsWith(".zst")) {
+    yield* createReadStream(path, { encoding: "utf8" });
+    return;
+  }
+  const frame = await readFile(path);
+  const size = frameSize(frame);
+  const decoder = new StringDecoder("utf8");
+  let decoded = 0;
+  for await (const chunk of Readable.from([frame]).pipe(createZstdDecompress())) {
+    decoded += chunk.length;
+    yield decoder.write(chunk);
+  }
+  if (size !== null && decoded !== size) throw new Error("a compressed rollout is incomplete");
+  yield decoder.end();
 }
 
 async function firstRecord(path) {
   let line = "";
-  for await (const chunk of createReadStream(path, { encoding: "utf8" })) {
+  for await (const chunk of text(path)) {
     const end = chunk.indexOf("\n");
     line += end < 0 ? chunk : chunk.slice(0, end);
     if (end >= 0) return JSON.parse(line);
@@ -56,7 +102,7 @@ async function firstRecord(path) {
 
 async function* records(path) {
   let pending = "";
-  for await (const chunk of createReadStream(path, { encoding: "utf8" })) {
+  for await (const chunk of text(path)) {
     pending += chunk;
     let end;
     while ((end = pending.indexOf("\n")) >= 0) {

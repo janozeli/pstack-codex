@@ -17,8 +17,8 @@ Keep the source role list and panel lengths. Inherited aliases belong to the par
 
 ## Session evidence
 
-History is under $CLAUDE_CONFIG_DIR/projects (default ~/.claude/projects). Validate sessionId and cwd; file-history snapshots can precede conversation records.
-Use a session ID or transcript path supplied by the host, not the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
+History is under $CLAUDE_CONFIG_DIR/projects (default ~/.claude/projects), one folder per workspace named after its path with each / and . replaced by -. Validate sessionId and cwd; file-history snapshots can precede conversation records.
+This conversation's session ID is the value the poteto-mode, reflect and show-me-your-work skills state when invoked. Its transcript is <workspace folder>/<session ID>.jsonl, and its subagents are under <session ID>/subagents/. Never pick the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
 The installed worktree-audit.sh selects this host's history reader. A review-history bucket requires investigation, not deletion. Chat activity never authorizes cleanup by itself.
 
 ## Capability-dependent work

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Reflect
 
-Follow the [native runtime contracts](../../docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities.
+Follow the [native runtime contracts](../../docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities. This session's ID is `${CLAUDE_SESSION_ID}`.
 
 Mine the current conversation for durable learnings, then route them into skill edits.
 

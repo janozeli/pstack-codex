@@ -82,11 +82,14 @@ function mentions(value, path) {
   return false;
 }
 
+// Empty files, prompt summaries and workflow journals hold no conversation, so they have no workspace.
 async function workspace(path) {
+  let conversation = false;
   for await (const record of records(path)) {
     if (typeof record.cwd === "string" && isAbsolute(record.cwd)) return canonical(record.cwd);
+    if (record.type === "user" || record.type === "assistant") conversation = true;
   }
-  return null;
+  return conversation ? null : undefined;
 }
 
 async function worktreeActivity(repo, claudeHome) {
@@ -96,6 +99,7 @@ async function worktreeActivity(repo, claudeHome) {
   const activity = Object.fromEntries(paths.map((path) => [path, null]));
   for await (const path of transcripts(join(claudeHome, "projects"))) {
     const cwd = await workspace(path);
+    if (cwd === undefined) continue;
     if (cwd === null) throw new Error("a transcript has no valid workspace metadata");
     if (!worktrees.some((worktree) => inside(cwd, worktree.canonical))) continue;
     const touched = new Set(worktrees.filter((worktree) => inside(cwd, worktree.canonical)));

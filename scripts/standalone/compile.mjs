@@ -114,6 +114,10 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /\.cursor-plugin/g, codex ? '.codex-plugin' : '.claude-plugin');
   text = edit.replace(text, /~\/\.cursor\/projects\/\*\//g, 'unverified project history directories');
   text = edit.replace(text, /\.cursor\/worktrees/g, '.worktrees');
+  text = edit.replace(text, /\(the system prompt names (?:this|the) path\)/g, '(see Session evidence in docs/runtime.md)');
+  text = edit.replace(text, /the system prompt names the path\. /g, 'see Session evidence in docs/runtime.md. ');
+  text = edit.replace(text, /The system prompt names the workspace's `agent-transcripts\/` directory\./g, "Session evidence in docs/runtime.md locates the workspace's history.");
+  text = edit.replace(text, /the root agent's store \(path in the system prompt\)/g, "the coordinator's project-local notes.md");
   text = edit.replace(text, /`agent-transcripts\/` directory the system prompt names/g, 'verified session-history location described in docs/runtime.md');
   text = edit.replace(text, /`agent-transcripts\/` directory/g, 'verified session-history location');
   text = edit.replace(text, /`Task`|\bTask tool\b|\bTask calls?\b|\bTask subagent\b|\bTask spawn\b/g, match => match === '`Task`' ? '`'+tool+'`' : match.replace('Task',tool));
@@ -148,6 +152,10 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   }
   if ((path.endsWith('/SKILL.md') && /Task|AskQuestion|\.cursor|Cursor|inherit-parent|Grok Bot|create-skill|agent-transcripts|\/loop/.test(input)) || path.startsWith('agents/')) {
     text = edit.replace(text, /^(# .*)\n+/m, `$1\n\nFollow the [native runtime contracts](${root}docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities.\n\n`);
+  }
+  // Claude substitutes ${CLAUDE_SESSION_ID} only in SKILL.md text loaded as a skill, so the skills that audit this conversation state it.
+  if (!codex && ['skills/poteto-mode/SKILL.md', 'skills/reflect/SKILL.md', 'skills/show-me-your-work/SKILL.md'].includes(path)) {
+    text = edit.replace(text, /(for delegation, configuration, session evidence, and optional capabilities\.)\n/, "$1 This session's ID is `${CLAUDE_SESSION_ID}`.\n");
   }
   const unresolved = /\bCursor\b|\.cursor(?:\/|-plugin)|cursor-team-kit|api2\.cursor\.sh|\bAskQuestion\b|\bgeneralPurpose\b|\bcloud_base_branch\b|\bfile_attachments\b|`Task`|\bTask tool\b|\/add-plugin/;
   if (unresolved.test(text)) throw new Error(`${path}: unresolved host dependency in ${host} output`);

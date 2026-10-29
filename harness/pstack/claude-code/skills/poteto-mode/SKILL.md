@@ -8,7 +8,7 @@ color: yellow
 
 # Poteto mode
 
-Follow the [native runtime contracts](../../docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities.
+Follow the [native runtime contracts](../../docs/runtime.md) for delegation, configuration, session evidence, and optional capabilities. This session's ID is `${CLAUDE_SESSION_ID}`.
 
 Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's absolute path in every `poteto-agent` prompt.
 
