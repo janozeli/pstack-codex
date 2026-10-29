@@ -98,6 +98,25 @@ test("a malformed Claude conversation needs review instead of safe cleanup", (t)
   assert.equal(f.audit().bucket, "review-history");
 });
 
+test("Claude files without conversation records do not block the audit", (t) => {
+  const f = fixture(t);
+  f.transcript(f.worktree);
+  const projects = join(f.env.CLAUDE_CONFIG_DIR, "projects");
+  writeFileSync(join(projects, "project-name/empty.jsonl"), "");
+  writeFileSync(join(projects, "project-name/summary.jsonl"), `${JSON.stringify({ type: "last-prompt", lastPrompt: "hi", sessionId: "other" })}\n`);
+  mkdirSync(join(projects, "project-name/session/subagents/workflows/wf_1"), { recursive: true });
+  writeFileSync(join(projects, "project-name/session/subagents/workflows/wf_1/journal.jsonl"), `${JSON.stringify({ type: "started" })}\n`);
+  assert.equal(f.audit().bucket, "verify-recent-chat");
+});
+
+test("a Claude conversation without a workspace still needs review", (t) => {
+  const f = fixture(t);
+  f.transcript(f.worktree);
+  const path = join(f.env.CLAUDE_CONFIG_DIR, "projects/project-name/no-cwd.jsonl");
+  writeFileSync(path, `${JSON.stringify({ type: "user", sessionId: "other", message: { role: "user", content: "hi" } })}\n`);
+  assert.equal(f.audit().bucket, "review-history");
+});
+
 test("a partial final Claude record preserves observed activity", (t) => {
   const f = fixture(t);
   const path = f.transcript(f.worktree);

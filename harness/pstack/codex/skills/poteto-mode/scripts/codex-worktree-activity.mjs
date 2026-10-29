@@ -5,6 +5,8 @@ import { createReadStream } from "node:fs";
 import { readdir, readlink, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
+import { pipeline } from "node:stream";
+import { createZstdDecompress } from "node:zlib";
 
 async function canonical(path) {
   try {
@@ -40,13 +42,19 @@ async function* transcripts(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) yield* transcripts(path);
-    else if (entry.isFile() && entry.name.startsWith("rollout-") && entry.name.endsWith(".jsonl")) yield path;
+    else if (entry.isFile() && entry.name.startsWith("rollout-") && /\.jsonl(\.zst)?$/.test(entry.name)) yield path;
   }
+}
+
+// Codex compresses older rollouts to .jsonl.zst.
+function text(path) {
+  if (!path.endsWith(".zst")) return createReadStream(path, { encoding: "utf8" });
+  return pipeline(createReadStream(path), createZstdDecompress(), () => {}).setEncoding("utf8");
 }
 
 async function firstRecord(path) {
   let line = "";
-  for await (const chunk of createReadStream(path, { encoding: "utf8" })) {
+  for await (const chunk of text(path)) {
     const end = chunk.indexOf("\n");
     line += end < 0 ? chunk : chunk.slice(0, end);
     if (end >= 0) return JSON.parse(line);
@@ -56,7 +64,7 @@ async function firstRecord(path) {
 
 async function* records(path) {
   let pending = "";
-  for await (const chunk of createReadStream(path, { encoding: "utf8" })) {
+  for await (const chunk of text(path)) {
     pending += chunk;
     let end;
     while ((end = pending.indexOf("\n")) >= 0) {

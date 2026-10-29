@@ -17,8 +17,8 @@ Keep the source role list and panel lengths. Inherited aliases belong to the par
 
 ## Session evidence
 
-History is under $CODEX_HOME/sessions and archived_sessions (default ~/.codex). Validate session_meta.payload.id and payload.cwd.
-Use a session ID or transcript path supplied by the host, not the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
+History is under $CODEX_HOME/sessions and archived_sessions (default ~/.codex), as rollout-*.jsonl files or zstd-compressed rollout-*.jsonl.zst files. Validate session_meta.payload.id and payload.cwd.
+This conversation's thread ID is $CODEX_THREAD_ID in the shell, and its rollout file name ends with that ID. Never pick the newest file. Resolve symlinks and compare checkout directory boundaries before inspecting conversation content. For deleted paths, resolve the existing ancestor and append the missing suffix. Read only verified relevant checkouts. If identity cannot be established, use an explicitly labeled digest of this conversation; a digest does not prove a complete transcript audit. For history mining, first scope candidates by workspace metadata, then inspect relevant conversations. Subagents are separate conversations.
 The installed worktree-audit.sh selects this host's history reader. A review-history bucket requires investigation, not deletion. Chat activity never authorizes cleanup by itself.
 
 ## Capability-dependent work

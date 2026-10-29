@@ -109,3 +109,21 @@ test('Codex reset instructions preserve the shared AGENTS.md file', () => {
   assert.match(guide, /remove only.*pstack models.*block/i);
   assert.match(guide, /Preserve.*outside.*block/i);
 });
+
+test('no package claims the system prompt names a history path', () => {
+  for (const host of ['claude-code', 'codex']) {
+    for (const file of walk(join(root, 'harness/pstack', host)).filter(path => path.endsWith('.md'))) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /system prompt names|path in the system prompt/, file);
+    }
+  }
+});
+
+test('Claude skills that audit this conversation state its session ID', () => {
+  for (const skill of ['poteto-mode', 'reflect', 'show-me-your-work']) {
+    const claude = readFileSync(join(root, 'harness/pstack/claude-code/skills', skill, 'SKILL.md'), 'utf8');
+    const codex = readFileSync(join(root, 'harness/pstack/codex/skills', skill, 'SKILL.md'), 'utf8');
+    assert.match(claude, /This session's ID is `\$\{CLAUDE_SESSION_ID\}`\./, skill);
+    assert.doesNotMatch(codex, /CLAUDE_SESSION_ID/, skill);
+  }
+  assert.match(readFileSync(join(root, 'harness/pstack/codex/docs/runtime.md'), 'utf8'), /\$CODEX_THREAD_ID/);
+});

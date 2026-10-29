@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { zstdCompressSync } from "node:zlib";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = join(root, "pstack/skills/poteto-mode/scripts");
@@ -112,6 +113,22 @@ test("unreadable session evidence never becomes a safe classification", (t) => {
   const result = f.audit();
   assert.equal(result.bucket, "review-history");
   assert.match(result.stderr, /Codex.*history|history.*Codex/);
+});
+
+test("a compressed Codex rollout counts as activity", (t) => {
+  const f = fixture(t);
+  const path = f.transcript(f.worktree);
+  writeFileSync(`${path}.zst`, zstdCompressSync(readFileSync(path)));
+  rmSync(path);
+  assert.equal(f.audit().bucket, "verify-recent-chat");
+});
+
+test("an unreadable compressed rollout needs review instead of safe cleanup", (t) => {
+  const f = fixture(t);
+  const path = f.transcript(f.worktree);
+  writeFileSync(`${path}.zst`, "not zstd");
+  rmSync(path);
+  assert.equal(f.audit().bucket, "review-history");
 });
 
 test("the Codex package selects its history reader without an explicit flag", (t) => {
