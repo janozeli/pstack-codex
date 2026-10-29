@@ -2,7 +2,7 @@
   "reviewedAt": "4bda52ce815ba7e8d661879688f24823d0217b2e",
   "sha256": {
     "scripts/standalone/compile.mjs": "c24ec57e853557484a24995d1497333c991f3f04523a8c8579874d17ad425b74",
-    "scripts/standalone/runtime.mjs": "42c80635d484b0267ac6c138523c5b68e9037c9eb1de3b5266fe4d3f9aa7f4b2",
+    "scripts/standalone/runtime.mjs": "81b88477aaf156a08fc5c932dc5224c3b077b80365d521a251bc1045a182e9cb",
     "scripts/generate-pstack-harness-trees.mjs": "9499bd5275880c6ca0955c85d8b9d522c18c1cf53f50000dbd81908aa6c2baea",
     "pstack/skills/setup-pstack/SKILL.md": "df8ad3638a4dca31fb4b43d58056f0299f23ad0530614166d55ef989062b41ec",
     "scripts/standalone/edits.mjs": "a0b74b373c6f92be7062c7bfe2b507143d893d3ab6d7c6a4dd78f29dedaff233"
