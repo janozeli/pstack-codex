@@ -20,13 +20,13 @@ const TARGETS = [
     tree: "claude-code",
     harness: "Claude Code",
     manifests: ["plugin.json", ".claude-plugin/plugin.json"],
-    manifestFields: { version: "0.15.36-claude.7", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { version: "0.15.36-claude.8", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
   },
   {
     tree: "codex",
     harness: "Codex",
     manifests: [".codex-plugin/plugin.json"],
-    manifestFields: { skills: "./skills/", version: "0.15.36-codex.6", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
+    manifestFields: { skills: "./skills/", version: "0.15.36-codex.7", homepage: "https://github.com/janozeli/pstack-port", repository: "https://github.com/janozeli/pstack-port" },
     userInvoked: CODEX_POLICY,
   },
 ];
@@ -106,7 +106,7 @@ function render({ harness, manifests, manifestFields, userInvoked: policy }, emi
   files.delete(`skills/poteto-mode/scripts/${nativeHistory === "codex" ? "claude" : "codex"}-worktree-activity.mjs`);
   for (const name of ['check-plan.mjs', 'check-plan.test.ts']) {
     const entry = files.get(`skills/poteto-mode/scripts/${name}`);
-    entry.bytes = Buffer.from(compilePlanChecker(entry.bytes.toString('utf8'), trace(`skills/poteto-mode/scripts/${name}`)));
+    entry.bytes = Buffer.from(compilePlanChecker(entry.bytes.toString('utf8'), harness, trace(`skills/poteto-mode/scripts/${name}`)));
   }
   const audit = files.get("skills/poteto-mode/scripts/worktree-audit.sh");
   audit.bytes = Buffer.from(compileAudit(audit.bytes.toString("utf8"), harness, trace("skills/poteto-mode/scripts/worktree-audit.sh")));
