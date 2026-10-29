@@ -1,0 +1,22 @@
+{
+  "name": "pstack-validation",
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test scripts/test/*.test.mjs",
+    "typecheck:statechart": "tsc -p pstack/skills/statechart/scripts/tsconfig.json",
+    "test:statechart": "node --disable-warning=ExperimentalWarning --test --test-reporter=tap --test-concurrency=2 pstack/skills/statechart/scripts/test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "fast-check": "4.5.3",
+    "jsdom": "26.1.0",
+    "mermaid": "11.16.0",
+    "pele": "1.9.0",
+    "typescript": "6.0.3"
+  }
+}

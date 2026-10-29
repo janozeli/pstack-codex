@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
-import os from "node:os";
 import path from "node:path";
 import { before, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -18,31 +16,18 @@ const guide = fs.readFileSync(path.join(here, "../../references/render.md"), "ut
 const css = guide.match(/```css\n([\s\S]*?)```/);
 assert.ok(css, "references/render.md has no css block");
 const theme = css[1];
-const cache = path.join(
-  process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache"),
-  "statechart",
-);
-const install = (name: string, ...packages: string[]) => {
-  const dir = path.join(cache, name);
-  execFileSync(
-    "npm",
-    ["install", "--prefix", dir, "--no-audit", "--no-fund", "--save-exact", ...packages],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
-  return createRequire(path.join(dir, "package.json"));
-};
+// Dependencies are installed before testing from the repository lockfile.
+const require = createRequire(import.meta.url);
 
 let render: Render;
 let mermaid: Mermaid;
 let html: Html;
 before(async () => {
-  const pele = install("test-pele-1.9.0", "pele@1.9.0");
-  ({ render } = await import(pathToFileURL(pele.resolve("pele")).href));
+  ({ render } = await import(pathToFileURL(require.resolve("pele")).href));
 
-  const parser = install("test-mermaid-11.16.0", "mermaid@11.16.0", "jsdom@26.1.0");
-  const { window } = new (parser("jsdom").JSDOM)("");
+  const { window } = new (require("jsdom").JSDOM)("");
   Object.assign(globalThis, { window, document: window.document, DOMParser: window.DOMParser });
-  mermaid = (await import(pathToFileURL(parser.resolve("mermaid")).href)).default;
+  mermaid = (await import(pathToFileURL(require.resolve("mermaid")).href)).default;
   html = (markup) => {
     const t = window.document.createElement("template");
     t.innerHTML = markup;

@@ -10,6 +10,27 @@ function walk(dir) {
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
 }
+function anchors(file) {
+  const seen = new Map();
+  const result = new Set();
+  let fence;
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/);
+    if (marker) {
+      if (!fence) fence = marker[1];
+      else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = undefined;
+      continue;
+    }
+    const heading = !fence && line.match(/^#{1,6}\s+(.*?)\s*$/);
+    if (!heading) continue;
+    const slug = heading[1].replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[`*]/g, '')
+      .toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-');
+    const count = seen.get(slug) ?? 0;
+    seen.set(slug, count + 1);
+    result.add(count ? `${slug}-${count}` : slug);
+  }
+  return result;
+}
 for (const host of ["codex", "claude-code"]) {
   test(`${host} ships native instructions without a runtime translation adapter`, () => {
     const dir = join(root, "harness/pstack", host);
@@ -33,9 +54,10 @@ for (const host of ['codex', 'claude-code']) {
     const missing = [];
     for (const file of walk(dir).filter(p => p.endsWith('.md'))) {
       for (const [,href] of readFileSync(file,'utf8').matchAll(/\]\(([^)\s]+)\)/g)) {
-        if (/^[a-z]+:|^#/i.test(href) || href === 'url') continue;
-        const target = resolve(dirname(file),href.split(/[?#]/)[0]);
+        if (/^[a-z]+:/i.test(href) || href === 'url') continue;
+        const target = href.startsWith('#') ? file : resolve(dirname(file),href.split(/[?#]/)[0]);
         if (!target.startsWith(dir+'/') || !existsSync(target)) missing.push(`${file.slice(dir.length+1)} -> ${href}`);
+        else if (href.includes('#') && target.endsWith('.md') && !anchors(target).has(decodeURIComponent(href.split('#')[1]))) missing.push(`${file.slice(dir.length+1)} -> ${href} (missing anchor)`);
       }
     }
     assert.deepEqual(missing,[]);
@@ -47,16 +69,32 @@ for (const host of ['codex','claude-code']) {
     const roles = file => {
       const text = readFileSync(file,'utf8');
       const table = text.slice(text.indexOf('# budget:')).split('```')[0];
-      return table.split('\n').filter(line => /^[a-z][^:]+: /.test(line)).map(line => {
+      const entries = table.split('\n').filter(line => /^[a-z][^:]+: /.test(line)).map(line => {
         const split = line.indexOf(': ');
         return [line.slice(0,split),line.slice(split+2).split(', ').length];
       });
+      assert.equal(entries.length, 17, 'the setup contract has 17 roles');
+      return entries;
     };
     assert.deepEqual(roles(join(root,'harness/pstack',host,'skills/setup-pstack/SKILL.md')), roles(join(root,'pstack/skills/setup-pstack/SKILL.md')));
     const scripts = join(root,'harness/pstack',host,'skills/poteto-mode/scripts');
     assert.equal(existsSync(join(scripts,`${host === 'codex' ? 'claude' : 'codex'}-worktree-activity.mjs`)),false);
   });
 }
+
+test('implicit invocation policies match source intent only in Codex', () => {
+  const source = join(root, 'pstack/skills');
+  for (const skill of readdirSync(source)) {
+    const path = join(source, skill, 'SKILL.md');
+    if (!existsSync(path)) continue;
+    const frontmatter = readFileSync(path, 'utf8').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+    const disabled = /^disable-model-invocation:\s*true\s*$/m.test(frontmatter);
+    const codex = join(root, 'harness/pstack/codex/skills', skill, 'agents/openai.yaml');
+    assert.equal(existsSync(codex), disabled, skill);
+    if (disabled) assert.match(readFileSync(codex, 'utf8'), /^policy:\n  allow_implicit_invocation: false\s*$/);
+    assert.equal(existsSync(join(root, 'harness/pstack/claude-code/skills', skill, 'agents/openai.yaml')), false);
+  }
+});
 
 test('the compiler rejects a new unmapped source host dependency', async () => {
   const { compileMarkdown } = await import('../standalone/compile.mjs');

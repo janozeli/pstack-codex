@@ -408,7 +408,7 @@ export async function check(specFile: string, configFile: string): Promise<Check
       states: judged.states,
       messages: messagesOf(judged.first.output),
       rules: checked,
-    };
+    } satisfies Pick<CheckResult, "spec" | "exit" | "stop" | "states" | "messages" | "rules">;
     if (judged.states.distinct <= CHART_STATES) {
       const tag = `chart-${randomBytes(16).toString("hex")}`;
       fs.writeFileSync(path.join(dir, "ChartRun.tla"), chartRun(spec, tag));

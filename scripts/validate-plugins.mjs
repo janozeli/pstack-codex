@@ -24,6 +24,29 @@ addFormats(ajv);
 const validateMarketplace = ajv.compile(marketplaceSchema);
 const validatePlugin = ajv.compile(pluginSchema);
 
+// Validate the native manifest fields used by these distributions. Host-specific
+// extensions remain allowed; this is not a replacement for native CLI validation.
+const validateNative = ajv.compile({
+  type: "object", required: ["name"],
+  properties: {
+    name: { type: "string", minLength: 1 },
+    version: { type: "string" },
+    description: { type: "string" },
+    homepage: { type: "string", format: "uri" },
+    repository: { type: "string", format: "uri" },
+    license: { type: "string" },
+    keywords: { type: "array", items: { type: "string" } },
+    author: { type: "object", required: ["name"], properties: { name: { type: "string" } } },
+    skills: { anyOf: [{ type: "string" }, { type: "array", items: { type: "string" } }] },
+  },
+});
+function checkNative(manifest, path) {
+  if (!validateNative(manifest)) {
+    fail(`${path}: native manifest validation failed`);
+    for (const error of validateNative.errors) console.error(`  ${error.instancePath || "/"}: ${error.message}`);
+  }
+}
+
 let errors = 0;
 
 function fail(message) {
@@ -109,6 +132,7 @@ for (const entry of claudeMarketplace.plugins ?? []) {
   }
 
   const pluginJson = loadJSON(pluginJsonPath);
+  checkNative(pluginJson, pluginJsonPath);
   if (pluginJson.name && pluginJson.name !== entry.name) {
     fail(
       `Plugin "${entry.name}": Claude marketplace name does not match .claude-plugin/plugin.json name "${pluginJson.name}"`
@@ -161,6 +185,7 @@ for (const entry of codexEntries) {
   }
 
   const pluginJson = loadJSON(pluginJsonPath);
+  checkNative(pluginJson, pluginJsonPath);
   if (pluginJson.name && pluginJson.name !== entry.name) {
     fail(
       `Plugin "${entry.name}": Codex marketplace name does not match ${pluginJsonPath.slice(pluginDir.length + 1)} name "${pluginJson.name}"`

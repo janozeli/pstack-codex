@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -119,12 +119,7 @@ test("the Codex package selects its history reader without an explicit flag", (t
   f.transcript(f.worktree);
   const plugin = join(f.dir, "plugin");
   const scripts = join(plugin, "skills/poteto-mode/scripts");
-  mkdirSync(scripts, { recursive: true });
-  mkdirSync(join(plugin, ".codex-plugin"));
-  writeFileSync(join(plugin, ".codex-plugin/plugin.json"), '{"name":"pstack"}\n');
-  for (const name of ["worktree-audit.sh", "codex-worktree-activity.mjs"]) {
-    if (existsSync(join(source, name))) copyFileSync(join(source, name), join(scripts, name));
-  }
+  cpSync(join(root, "harness/pstack/codex"), plugin, { recursive: true });
   assert.equal(f.audit(join(scripts, "worktree-audit.sh"), []).bucket, "verify-recent-chat");
 });
 
@@ -173,6 +168,25 @@ test("the published Codex marketplace passes validation", (t) => {
   const result = f.validate();
   assert.equal(result.status, 0, result.stderr);
 });
+
+for (const [host, manifest, field, value] of [
+  ["codex", ".codex-plugin/plugin.json", "skills", 99],
+  ["claude-code", ".claude-plugin/plugin.json", "version", 123],
+  ["codex", ".codex-plugin/plugin.json", "name", null],
+]) {
+  test(`native ${host} manifest rejects invalid ${field}`, (t) => {
+    const f = marketplaceFixture(t);
+    const path = join(f.dir, "harness/pstack", host, manifest);
+    const json = JSON.parse(readFileSync(path, "utf8"));
+    json[field] = value;
+    writeFileSync(path, JSON.stringify(json));
+    // Keep duplicate versions equal so this exercises the native field validator.
+    if (field === "version") writeFileSync(join(dirname(dirname(path)), "plugin.json"), JSON.stringify(json));
+    const result = f.validate();
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, new RegExp(`native manifest.*${field}`, "s"));
+  });
+}
 
 test("missing Codex marketplace fails instead of installing the Claude tree", (t) => {
   const f = marketplaceFixture(t);
