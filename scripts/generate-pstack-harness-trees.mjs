@@ -65,6 +65,12 @@ const TERMS = [
   { key: ".cursor/rules/", re: /\.cursor\/rules|always-applied rule/ },
   { key: "agent-transcripts", re: /agent-transcripts|\.cursor\/projects/ },
   { key: "Cursor-only features", re: /Bugbot|Cursor [Aa]utomation|cursor\.(sh|com)\/automations|[Cc]loud [Aa]gent|built-in PR tool/ },
+  { key: "`create-skill`", re: /\bcreate-skill\b/, harness: "Codex" },
+  { key: "`deslop`", re: /\bdeslop\b/, harness: "Codex" },
+  { key: "`control-cli`", re: /\bcontrol-cli\b/, harness: "Codex" },
+  { key: "`control-ui`", re: /\bcontrol-ui\b/, harness: "Codex" },
+  { key: "`/loop`", re: /\/loop\b/, harness: "Codex" },
+  { key: "Project tracker and Project store", re: /Project (tracker|store)/, harness: "Codex" },
 ];
 const ROUTE_KEY = "Run another pstack skill";
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -118,6 +124,8 @@ for (const [skill, { usesCursorNames, wrap }] of classes) {
 for (const { harness, adapter } of TARGETS) {
   const text = readFileSync(join(PSTACK, adapter), "utf8");
   for (const [key, using] of users) {
+    const target = TERMS.find((term) => term.key === key)?.harness;
+    if (target && target !== harness) continue;
     if (!text.includes(key)) problems.push(`${harness} adapter has no row for ${key}, used by ${using.join(", ")}`);
   }
 }

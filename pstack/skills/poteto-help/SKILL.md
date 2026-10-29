@@ -45,7 +45,7 @@ If cost is the worry, say where the tokens go and how to spend fewer. pstack spe
 
 pstack is built for Cursor, and it also installs in Claude Code with `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. There, each command takes a `pstack:` prefix, such as `/pstack:poteto-mode`. The [Claude Code adapter](../../docs/harness/claude-code.md) maps the Cursor names, and a step that needs a Cursor-only feature, such as Bugbot or Automations, is skipped with a one-line note.
 
-It also installs in Codex with `codex plugin marketplace add cursor/plugins`, then `codex plugin add pstack@cursor-plugins`. There, each skill runs as `$pstack:<name>`, such as `$pstack:poteto-mode`, and the [Codex adapter](../../docs/harness/codex.md) maps the Cursor names.
+For this fork's Codex package, follow the [local marketplace installation instructions](../../README.md#install), then install `pstack@cursor-plugins`. Verify that the marketplace points to this clone rather than the upstream repository. Each skill runs as `$pstack:<name>`, such as `$pstack:poteto-mode`. The [Codex adapter](../../docs/harness/codex.md) maps the Cursor names and defines which workflow steps need host capabilities.
 
 Other tools can read the skills, because they use the Agent Skills format. But most workflow skills, including `/poteto-mode`, `/how`, `/why`, and `/teach`, spawn Cursor subagents with per-role models, and Custom Modes and `/loop` are Cursor features, so those parts may not work there.
 
