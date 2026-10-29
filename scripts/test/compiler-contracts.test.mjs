@@ -39,7 +39,7 @@ Recorded.
 `;
 
 for (const [host, tree, judgment, tool, config, code] of [
-  ['Codex', 'codex', 'gpt-6-astra', 'spawn_agent', '$CODEX_HOME/AGENTS.md', 'gpt-6-luna'],
+  ['Codex', 'codex', 'gpt-6-astra', 'spawn_agent', '$CODEX_HOME/AGENTS.md', 'gpt-6.1-sol'],
   ['Claude Code', 'claude-code', 'opus', 'Agent', '$CLAUDE_CONFIG_DIR/rules/pstack-models.md', 'haiku'],
 ]) {
   test(`${host} compiles native models, effort, tools and configuration independently`, () => {

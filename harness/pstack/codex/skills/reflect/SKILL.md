@@ -25,7 +25,7 @@ Each reviewer and the synthesizer name a role line in the `$CODEX_HOME/AGENTS.md
 | Lens | Role line | Default `model` | Prompt template |
 |---|---|---|---|
 | Judgment | `reflect judgment, divergent, synthesizer` | `gpt-6-astra xhigh` | `references/judgment-reviewer.md` |
-| Tooling | `reflect tooling` | `gpt-6-luna xhigh` | `references/tooling-reviewer.md` |
+| Tooling | `reflect tooling` | `gpt-6.1-sol xhigh` | `references/tooling-reviewer.md` |
 | Divergent | `reflect judgment, divergent, synthesizer` | `gpt-6-astra xhigh` | `references/divergent-reviewer.md` |
 
 Pass each template verbatim, substituting the transcript path or digest where marked. Reviewers return findings in the `spawn_agent` response body.

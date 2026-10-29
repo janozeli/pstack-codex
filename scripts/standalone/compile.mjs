@@ -147,7 +147,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /`run_in_background: true`/g, 'the host-supported background dispatch route');
   text = edit.replace(text, /`environment: "cloud"`/g, 'the host-supported isolation route');
   text = edit.replace(text, /\bclaude-opus-5-5-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `${codex ? 'gpt-6-astra' : 'opus'} ${effort}`);
-  text = edit.replace(text, /\bgrok-4\.7-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `${codex ? 'gpt-6-luna' : 'haiku'} ${effort}`);
+  text = edit.replace(text, /\bgrok-4\.7-(max|xhigh|high|medium|low)(?:-fast)?\b/g, (_, effort) => `${codex ? 'gpt-6.1-sol' : 'haiku'} ${effort}`);
   text = edit.replace(text, /Cursor's built-in `create-skill`(?: skill)?|the \*\*create-skill\*\* skill \(Cursor's built-in for authoring SKILL.md files\)/g, 'the skill-authoring procedure in docs/runtime.md');
   text = edit.replace(text, /^Not in pstack:\n\n- `\/deslop`, `control-cli`, and `control-ui` ship in the `cursor-team-kit` plugin\.\n/m, 'This package also bundles `/deslop`, `control-cli`, and `control-ui`.\n\nNot in pstack:\n\n');
   text = edit.replace(text, /`\/deslop` ships in the `cursor-team-kit` plugin, not in pstack\. If you don't have it, ask for the same outcome in plain words: [^\n]*? edits\./, '`/deslop` ships bundled with this package.');

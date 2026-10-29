@@ -23,7 +23,7 @@ structure SourceModel where
 -- Each host keeps the author's two roles on its own models: her Opus seats take
 -- the host's strongest model, her Grok seats its fast model.
 inductive NativeFamily where
-  | opus | haiku | astra | luna
+  | opus | haiku | astra | sol
   deriving DecidableEq, Repr
 
 structure NativeModel where
@@ -36,7 +36,7 @@ def translate (host : Host) (source : SourceModel) : NativeModel :=
       | .claude, .opus => .opus
       | .claude, .grok => .haiku
       | .codex, .opus => .astra
-      | .codex, .grok => .luna
+      | .codex, .grok => .sol
     effort := source.effort }
 
 structure Role (α : Type) where
@@ -66,8 +66,8 @@ theorem codex_opus_is_astra (effort : Effort) (fast : Bool) :
     (translate .codex ⟨.opus, effort, fast⟩).family = .astra := by
   rfl
 
-theorem codex_grok_is_luna (effort : Effort) (fast : Bool) :
-    (translate .codex ⟨.grok, effort, fast⟩).family = .luna := by
+theorem codex_grok_is_sol (effort : Effort) (fast : Bool) :
+    (translate .codex ⟨.grok, effort, fast⟩).family = .sol := by
   rfl
 
 theorem fast_does_not_change_model (host : Host) (family : Family) (effort : Effort) :
@@ -92,7 +92,7 @@ def effortText : Effort → String
 
 def render (model : NativeModel) : String :=
   (match model.family with
-    | .opus => "opus" | .haiku => "haiku" | .astra => "gpt-6-astra" | .luna => "gpt-6-luna") ++
+    | .opus => "opus" | .haiku => "haiku" | .astra => "gpt-6-astra" | .sol => "gpt-6.1-sol") ++
     " " ++ effortText model.effort
 
 def invocation (host : Host) (skill : String) : String :=
