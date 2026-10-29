@@ -107,6 +107,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /Set `model` to that line's value, or to the default if the rule or the line is missing\./g, 'Resolve that role value, or its default, into model and effort through docs/runtime.md before dispatch.');
   text = edit.replace(text, /docs\/harness\/(?:codex|claude-code)\.md/g, 'docs/runtime.md');
   text = edit.replace(text, /git show origin\/main:(?:pstack\/skills\/)?/g, 'cat <pstack skills dir>/');
+  text = edit.replace(text, /(this playbook|these|the execution playbook) from trunk/g, '$1 from the installed package');
   text = edit.replace(text, /node pstack\/skills\//g, 'node <pstack skills dir>/');
   text = edit.replace(text, /`pstack\/skills\//g, '`<pstack skills dir>/');
   if (path === 'skills/poteto-mode/SKILL.md') section('**Match the model to the job.**', "You own every subagent's work.", '**Match the model to the job.** Start from the configured role and effort. Raise effort one supported step for the hardest work, lower it for routine work, and preserve the requested provider family. Verification keeps the swarm workers role. Split model from effort before dispatch. Use speed controls only if the live schema supports them and urgency warrants them. Never append a speed suffix to a native model ID. Follow the supported-effort fallback in docs/runtime.md; report unavailable models, overrides, and any reduced diversity instead of inventing IDs.');

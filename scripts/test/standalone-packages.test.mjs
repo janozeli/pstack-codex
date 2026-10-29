@@ -165,7 +165,7 @@ test('monitoring maps to each host native command', () => {
   const read = host => walk(join(root, 'harness/pstack', host)).filter(path => path.endsWith('.md')).map(path => readFileSync(path, 'utf8')).join('\n');
   const claude = read('claude-code');
   const codex = read('codex');
-  for (const text of [claude, codex]) assert.doesNotMatch(text, /persistent monitoring|git show origin\/main:|node pstack\/skills\//);
+  for (const text of [claude, codex]) assert.doesNotMatch(text, /persistent monitoring|git show origin\/main:|node pstack\/skills\/|(?:playbook|these) from trunk/);
   assert.match(claude, /`\/loop 1h`/);
   assert.match(readFileSync(join(root, 'harness/pstack/claude-code/docs/runtime.md'), 'utf8'), /built-in \/loop command/);
   assert.doesNotMatch(codex, /\/loop/);
