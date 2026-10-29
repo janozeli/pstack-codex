@@ -43,6 +43,10 @@ python3 scripts/check-native-install.py claude --require
 
 Use `--cli /absolute/path/to/binary` if a version-manager shim depends on the original home directory. Without `--require`, a missing CLI reports `SKIP`; an installed CLI that fails always fails the check. CI uses `--require` with Codex 0.165.0 and Claude Code 2.1.312. Update these versions deliberately when adopting a new host contract. These checks prove installation and discovery, not every agent-driven workflow or optional external service.
 
+## Port proofs with Lean
+
+Lean verifies selected port translation contracts from repository-only files in `verification/lean/`. It is excluded from skills and generated packages. See [Lean verification of the port](lean-verification.md) for the exact proof boundary, compiler correspondence, pinned installation and `npm run verify:lean`. The separate `port-proofs` CI job requires all proofs and negative controls to pass; missing Lean cannot produce a skip.
+
 ## CI coverage
 
 The workflow runs on every pull request, pushes to `main`, and manual dispatch. It has separate jobs for repository validation, each Bun package, statechart, and each native host. A failure in one suite does not prevent unrelated suites from reporting. The token has read-only repository permissions. Jobs have finite timeouts, and superseded runs are cancelled.

@@ -1,0 +1,9 @@
+{
+  "reviewedAt": "08ca473ff49ccf2b62960bd80f714b4100ce1d46",
+  "sha256": {
+    "scripts/standalone/compile.mjs": "08b4515dd9187772c865fd3e0430541edac89eb4d8b453873e651c9f211d00a5",
+    "scripts/standalone/runtime.mjs": "9327661851845447ad75060427892b2af89b0e01547ffa9d788c07624c51ec43",
+    "scripts/generate-pstack-harness-trees.mjs": "e030ec7a716b8891cb997af610ca758c618dc2761621ef970dd43bddbe5d1b6e",
+    "pstack/skills/setup-pstack/SKILL.md": "df8ad3638a4dca31fb4b43d58056f0299f23ad0530614166d55ef989062b41ec"
+  }
+}
