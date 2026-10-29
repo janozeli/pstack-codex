@@ -1,6 +1,6 @@
 # pstack
 
-This is the Claude Code port maintained by [janozeli](https://github.com/janozeli/pstack-claude). The original method and the introduction below are by Lauren Tan (poteto). The port changes host integration; it preserves the source roles and panel sizes.
+This is the Claude Code port maintained by [janozeli](https://github.com/janozeli/pstack-port). The original method and the introduction below are by Lauren Tan (poteto). The port changes host integration; it preserves the source roles and panel sizes.
 
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.
 
@@ -23,26 +23,18 @@ fork it. improve it. make it yours. PRs are welcome!
 in claude code:
 
 ```bash
-/plugin marketplace add janozeli/pstack-claude
-/plugin install pstack@pstack-claude
+/plugin marketplace add janozeli/pstack-port
+/plugin install pstack@pstack-port
 ```
 
-in codex, install this fork from a local clone:
+in codex:
 
 ```bash
-git clone https://github.com/janozeli/pstack-codex.git
-cd pstack-codex
-codex plugin marketplace list
+codex plugin marketplace add https://github.com/janozeli/pstack-port.git
+codex plugin add pstack@pstack-port
 ```
 
-the fork keeps the marketplace name `cursor-plugins`. if that name is already configured, verify that it points to this clone before installing. an entry pointing to `cursor/plugins` installs the upstream package. do not overwrite another marketplace silently.
-
-```bash
-codex plugin marketplace add "$(pwd)"
-codex plugin add pstack@cursor-plugins
-```
-
-claude code leaves auto-update off for third-party marketplaces, so pstack stays on the version you installed. to turn it on, run `/plugin`, open the **marketplaces** tab, select `pstack-claude`, and choose **enable auto-update**. to update once by hand, run `claude plugin update pstack@pstack-claude`.
+claude code leaves auto-update off for third-party marketplaces, so pstack stays on the version you installed. to turn it on, run `/plugin`, open the **marketplaces** tab, select `pstack-port`, and choose **enable auto-update**. to update once by hand, run `claude plugin update pstack@pstack-port`.
 
 claude code prefixes plugin commands and agents, so `/poteto-mode` is `/pstack:poteto-mode`. the [claude code adapter](./docs/harness/claude-code.md) maps every other cursor name. in claude code, `/pstack:setup-pstack` writes your model choices to `~/.claude/rules/pstack-models.md`, and a step that needs a cursor-only feature, such as bugbot or automations, uses a verified host equivalent or remains incomplete along with its dependent steps.
 

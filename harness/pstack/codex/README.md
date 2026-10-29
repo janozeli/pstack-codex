@@ -4,7 +4,7 @@ Generated from Lauren Tan's pstack. This package includes native Codex instructi
 
 ## Install
 
-See the [distribution repository](https://github.com/janozeli/pstack-codex) for marketplace installation.
+See the [distribution repository](https://github.com/janozeli/pstack-port) for marketplace installation.
 
 ## Start
 

@@ -4,7 +4,6 @@ import { runtime } from './runtime.mjs';
 export function compileMarkdown(path, input, host, skillNames, emit) {
   const edit = rewriter(emit);
   const codex = host === 'Codex';
-  const name = codex ? 'codex' : 'claude';
   const invoke = codex ? '$pstack:' : '/pstack:';
   const config = codex ? '$CODEX_HOME/AGENTS.md' : '$CLAUDE_CONFIG_DIR/rules/pstack-models.md';
   const tool = codex ? 'spawn_agent' : 'Agent';
@@ -17,7 +16,7 @@ export function compileMarkdown(path, input, host, skillNames, emit) {
     text = edit.splice(text, a, b, body + '\n\n', `section:${start}:${end}`);
   };
   if (path === 'README.md') {
-    return edit.splice(input, 0, input.length, `# pstack for ${host}\n\nGenerated from Lauren Tan's pstack. This package includes native ${host} instructions, all skills and playbooks, their supporting files, and the MIT license.\n\n## Install\n\nSee the [distribution repository](https://github.com/janozeli/pstack-${name}) for marketplace installation.\n\n## Start\n\nRun \`${invoke}setup-pstack\`, then \`${invoke}poteto-mode\` with a concrete goal and verification condition. Use \`${invoke}poteto-help\` for guidance.\n\nRead the [guide](docs/guide/README.md) and [runtime contracts](docs/runtime.md). The package executes without the source checkout or another plugin distribution. Optional host capabilities remain explicit requirements of the workflows that need them.\n`, 'standalone-readme');
+    return edit.splice(input, 0, input.length, `# pstack for ${host}\n\nGenerated from Lauren Tan's pstack. This package includes native ${host} instructions, all skills and playbooks, their supporting files, and the MIT license.\n\n## Install\n\nSee the [distribution repository](https://github.com/janozeli/pstack-port) for marketplace installation.\n\n## Start\n\nRun \`${invoke}setup-pstack\`, then \`${invoke}poteto-mode\` with a concrete goal and verification condition. Use \`${invoke}poteto-help\` for guidance.\n\nRead the [guide](docs/guide/README.md) and [runtime contracts](docs/runtime.md). The package executes without the source checkout or another plugin distribution. Optional host capabilities remain explicit requirements of the workflows that need them.\n`, 'standalone-readme');
   }
   if (path === 'skills/reflect/SKILL.md') section('Before fanning out,', '## 2.', 'Before fanning out, locate this conversation using the host-provided session identity and the Session evidence contract in docs/runtime.md. Do not choose a transcript by recency or opening-text similarity. If identity is unavailable, pass a concise digest and label that fallback.');
   if (path === 'skills/recall/SKILL.md') text = edit.replace(text, /^Transcripts live at .*$/m, 'Locate history using the Session evidence contract in docs/runtime.md. Scope each candidate by workspace metadata before reading conversation content.');
@@ -107,7 +106,7 @@ Read the endpoint from the created service. Use the host secret-request mechanis
   text = edit.replace(text, /It was started with Enter\. Start it as a Custom Mode, or start each task with/g, 'Invoke the skill for each new task with');
   text = edit.replace(text, /With no path, before any other work, search [\s\S]*?If no such file exists, stop and tell your parent\./g, 'With no parent-supplied path, resolve skills/poteto-mode/SKILL.md from the parent of this installed agents/ directory. If that path cannot be established, stop and tell the parent.');
   text = edit.replace(text, /^is_background:.*\n/m, '');
-  text = edit.replace(text, /https:\/\/github\.com\/cursor\/plugins/g, `https://github.com/janozeli/pstack-${name}`);
+  text = edit.replace(text, /https:\/\/github\.com\/cursor\/plugins/g, `https://github.com/janozeli/pstack-port`);
   text = edit.replace(text, /~\/\.cursor\/rules\/pstack-models\.mdc|pstack-models\.mdc/g, config);
   text = edit.replace(text, /~\/\.cursor\/skills\//g, codex ? '~/.agents/skills/' : '$CLAUDE_CONFIG_DIR/skills/');
   text = edit.replace(text, /\.cursor\/skills\//g, skillsDir);
