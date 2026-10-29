@@ -4,9 +4,9 @@
 # operated in it. Emits a table sorted by size with a suggested bucket. Never
 # deletes anything; deletion stays a human-gated step in the playbook.
 #
-# Usage: worktree-audit.sh [--harness cursor|codex] [-b|--base <ref>] [repo-path]
+# Usage: worktree-audit.sh [--harness claude] [-b|--base <ref>] [repo-path]
 #   repo-path defaults to the current repo.
-#   --harness defaults to codex in the generated Codex package, cursor elsewhere.
+#   --harness supports this standalone Claude Code package only.
 #   -b sets the ref the MERGED column checks against (e.g. origin/integration).
 #   Without it the base is origin/HEAD, then origin/main, then origin/master.
 #   origin/HEAD is the remote's default branch, not necessarily the branch PRs
@@ -14,19 +14,18 @@
 set -u
 
 script_dir=$(cd -- "$(dirname -- "$0")" && pwd)
-harness=cursor
-[ -f "$script_dir/../../../.codex-plugin/plugin.json" ] && harness=codex
+harness=claude
 base=""
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--harness) [ $# -ge 2 ] || { echo "error: --harness needs cursor or codex" >&2; exit 2; }; harness="$2"; shift 2 ;;
+	--harness) [ $# -ge 2 ] || { echo "error: --harness needs claude" >&2; exit 2; }; harness="$2"; shift 2 ;;
 	-b|--base) [ $# -ge 2 ] || { echo "error: $1 needs a ref" >&2; exit 2; }; base="$2"; shift 2 ;;
 	-h|--help) sed -n '2,/^set -u/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
 	-*) echo "error: unknown option: $1" >&2; exit 2 ;;
 	*) break ;;
 	esac
 done
-case "$harness" in cursor|codex) ;; *) echo "error: unknown harness: $harness" >&2; exit 2 ;; esac
+case "$harness" in claude) ;; *) echo "error: unknown harness: $harness" >&2; exit 2 ;; esac
 
 repo="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
 [ -z "$repo" ] && { echo "not in a git repo; pass a repo path" >&2; exit 1; }
@@ -76,13 +75,10 @@ elif raw=$(gh pr list --author "@me" --state all --limit 1000 \
 fi
 [ -s "$prs" ] || echo "[]" > "$prs"
 
-# Transcripts dir: ~/.cursor/projects/<slugified-repo-path>/agent-transcripts.
-slug=$(printf '%s' "$main_wt" | sed 's#^/##; s#/#-#g')
-transcripts="$HOME/.cursor/projects/$slug/agent-transcripts"
 history_complete=yes
 activity="{}"
-if [ "$harness" = codex ]; then
-	activity=$(node "$script_dir/codex-worktree-activity.mjs" "$main_wt") || history_complete=no
+if [ -n "$harness" ]; then
+	activity=$(node "$script_dir/$harness-worktree-activity.mjs" "$main_wt") || history_complete=no
 fi
 now=$(date +%s)
 
@@ -124,14 +120,11 @@ git worktree list --porcelain -z | while IFS= read -r -d '' field; do
 	# Most recent chat whose transcript operated in this worktree. Match path
 	# followed by "/" or a quote so glint-482 does not match glint-482-r37.
 	last="-"; last_ts=0
-	if [ "$harness" = codex ]; then
+	if [ -n "$harness" ]; then
 		if [ "$history_complete" = yes ]; then
 			last_ts=$(printf '%s' "$activity" | jq -er --arg wt "$wt" '.[$wt] // 0') || history_complete=no
 		fi
-	elif [ -d "$transcripts" ]; then
-		last_ts=$(rg -l -0 -F -e "${wt}/" -e "${wt}\"" "$transcripts" 2>/dev/null \
-			| xargs -0 stat "${stat_fmt[@]}" 2>/dev/null | sort -rn | head -1)
-		last_ts=${last_ts:-0}
+
 	fi
 	if [ "$last_ts" -gt 0 ] 2>/dev/null; then last=$(fmt_day "$last_ts" 2>/dev/null); fi
 	recent=$([ "$last_ts" -gt 0 ] 2>/dev/null && [ $(( (now - last_ts) / 86400 )) -le 4 ] && echo yes || echo no)
