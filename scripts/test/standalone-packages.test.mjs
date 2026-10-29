@@ -195,6 +195,6 @@ test('packages ship the cross-provider seat and teach setup to offer it', () => 
     assert.ok(existsSync(join(dir, 'skills/poteto-mode/scripts/cross-provider.mjs')), host);
     assert.match(readFileSync(join(dir, 'docs/runtime.md'), 'utf8'), /<provider>:<model> <effort>[\s\S]*cross-provider\.mjs[\s\S]*never replaced by the parent's model/);
     const setup = readFileSync(join(dir, 'skills/setup-pstack/SKILL.md'), 'utf8');
-    assert.match(setup, /detect seats on other providers[\s\S]*arena cross-judge pool and interrogate reviewers[\s\S]*arena and architect runners, keep native or T3 seats/);
+    assert.match(setup, /detect seats on other providers[\s\S]*arena cross-judge pool, whose judge answers without writing files[\s\S]*interrogate reviewers, keep native or T3 seats/);
   }
 });
