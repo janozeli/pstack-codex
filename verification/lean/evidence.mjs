@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, sourceFile, TARGETS, VENDORED } from '../../scripts/generate-pstack-harness-trees.mjs';
-import { coordinator, runtime } from '../../scripts/standalone/runtime.mjs';
+import { coordinator, readonlyAgent, runtime } from '../../scripts/standalone/runtime.mjs';
 
 export function walk(root, dir = '', sourceExclusions = true) {
   return readdirSync(join(root, dir), { withFileTypes: true }).flatMap(entry => {
@@ -69,6 +69,7 @@ export function collect(root) {
     });
     expected.push(entry('docs/runtime.md', Buffer.from(runtime(target.harness)), false));
     if (target.tree !== 'codex') expected.push(entry('agents/poteto-mode.md', Buffer.from(coordinator), false));
+    if (target.tree !== 'codex') expected.push(entry('agents/poteto-readonly.md', Buffer.from(readonlyAgent), false));
     const manifest = { ...JSON.parse(readFileSync(join(source, 'plugin.json'))), ...target.manifestFields };
     for (const path of (target.tree === 'codex' ? ['.codex-plugin/plugin.json'] : ['plugin.json', '.claude-plugin/plugin.json']))
       expected.push(entry(path, Buffer.from(JSON.stringify(manifest, null, 2) + '\n'), false));

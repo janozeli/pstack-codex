@@ -198,3 +198,18 @@ test('packages ship the cross-provider seat and teach setup to offer it', () => 
     assert.match(setup, /detect seats on other providers[\s\S]*arena cross-judge pool, whose judge answers without writing files[\s\S]*interrogate reviewers, keep native or T3 seats/);
   }
 });
+
+test('read-only delegates, program state and charts use real host features', () => {
+  const claude = join(root, 'harness/pstack/claude-code');
+  const codex = join(root, 'harness/pstack/codex');
+  assert.match(readFileSync(join(claude, 'agents/poteto-readonly.md'), 'utf8'), /^disallowedTools: Edit, Write, NotebookEdit$/m);
+  assert.equal(existsSync(join(codex, 'agents/poteto-readonly.md')), false);
+  assert.match(readFileSync(join(claude, 'skills/how/SKILL.md'), 'utf8'), /subagent_type: "pstack:poteto-readonly"/);
+  assert.match(readFileSync(join(codex, 'skills/how/SKILL.md'), 'utf8'), /read-only is instructed, not enforced/);
+  for (const dir of [claude, codex]) {
+    assert.doesNotMatch(readFileSync(join(dir, 'skills/poteto-mode/playbooks/orchestrate.md'), 'utf8'), /Project store/);
+    const ketchup = readFileSync(join(dir, 'skills/ketchup/SKILL.md'), 'utf8');
+    assert.match(ketchup, /xychart-beta/);
+    assert.doesNotMatch(ketchup, /visualize|native visualization tools/);
+  }
+});
